@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#define NUM_OF_EXECS 100000
+#define NUM_OF_EXECS 1000000
 
 int main()
 {
