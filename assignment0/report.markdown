@@ -1,6 +1,6 @@
 # Assignment 1 TMA881
 ## Holger Lindström, 930916, holgerlindstrom93@gmail.com
-## Andreas Magnusson
+## Andreas Magnusson, 900410, andreas.magnusson90@gmail.com
 ## Rickard Johansson
 1. LAPack and PLASMA
 2. Installing
