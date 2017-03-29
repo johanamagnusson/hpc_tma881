@@ -16,5 +16,7 @@ First, I don't know how detailed this should be, so maybe I overwritten it.
 
 
 3. Testing
+
 When installing PLASMA, the test files run automatically. We noticed however that the tests took a while to run.
+
 4. Makefile
