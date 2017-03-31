@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#define NUMBER_OF_ITERATIONS 1000
+#define NUMBER_OF_ITERATIONS 1
 
 int main()
 {
@@ -34,7 +34,8 @@ int main()
     
     averageTime = totalTime / NUMBER_OF_ITERATIONS;
     printf("Sum = %lu\n", sum);
-    printf("Time taken: %.8f ms\n", averageTime);
+    printf("Time measured: %.8f ms\n", averageTime);
+    printf("\n");
 
     return 0; 
     
