@@ -17,10 +17,14 @@ void mul_cpx(
 
 int main()
 {
-	int n = 30000;
-    
-    time_t start,end;
-    double difference;
+	const unsigned long int times = 100000;
+    clock_t start;
+    clock_t end;
+    double timeDiff;
+    double totTime;
+    double aveTime;
+
+    int n = 30000;
 
 	double a[n][2];
 	double b[n][2];
@@ -34,28 +38,46 @@ int main()
         c[i][1] = (rand() % n);
     }
 
-    start = time(NULL);
+    totTime = 0.0;
 
-    for ( int i=0; i<n; ++i)
+    for ( int j=0; j<times; j++ )
     {
-        mul_cpx(&a[i][0], &a[i][1], &b[i][0], &b[i][1], &c[i][0], &c[i][1]);
+
+        start = clock();
+
+        for ( int i=0; i<n; ++i)
+        {
+            mul_cpx(&a[i][0], &a[i][1], &b[i][0], &b[i][1], &c[i][0], &c[i][1]);
+        }
+
+        end = clock();
+        timeDiff = ((end - start) / (double) CLOCKS_PER_SEC) * 1000;
+        totTime += timeDiff;
     }
 
-    end = time(NULL);
+    aveTime = totTime / times;
 
-    difference = difftime(end,start);
-    printf("%d seconds\n", (int)difference);
+    printf("Time measured for mul_cpx in same file: %.8f ms\n", aveTime);
 
-    start = time(NULL);
+    totTime = 0.0;
 
-    for ( int i=0; i<n; ++i)
+    for (int j=0; j<times; j++)
     {
-        mulcpx(&a[i][0], &a[i][1], &b[i][0], &b[i][1], &c[i][0], &c[i][1]);
+
+        start = clock();
+
+        for ( int i=0; i<n; ++i)
+        {
+            mulcpx(&a[i][0], &a[i][1], &b[i][0], &b[i][1], &c[i][0], &c[i][1]);
+        }
+
+    end = clock();
+    timeDiff = ((end-start) / (double) CLOCKS_PER_SEC) * 1000;
+    totTime += timeDiff;
+
     }
 
-    end = time(NULL);
-
-    difference = difftime(end,start);
-    printf("%d seconds\n", (int)difference);
+    aveTime = totTime / times;
+    printf("Time measured for mul_cpx in separate file: %.8f ms\n", aveTime);
 }
 
