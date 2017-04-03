@@ -68,6 +68,8 @@ int main()
         totalTime += diffTime;
     }
     averageTime = totalTime / BENCHMARK_ITERATIONS;
+
+    free(p); free(x); free(y);
     
     printf("--- Direct addressing ---\n");
     printf("Time measured: %.8f ms\n", averageTime);
