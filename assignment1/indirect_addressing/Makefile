@@ -23,4 +23,3 @@ runall :
 	@./mainO0
 	@echo "O3"
 	@./mainO3
-	#@$(foreach exe, $(EXE), ./$(exe);)

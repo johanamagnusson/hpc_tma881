@@ -1,13 +1,18 @@
 #include <stdio.h>
 #include <time.h>
+#include <stdlib.h>
 
 #define BENCHMARK_ITERATIONS 10000
 
 int main()
 {
     int kx, jx, ix, a, i;
-    const int n = 100000;
+    const int n = 1000000;
     const int m = 1000;
+
+    int *p;
+    int *x;
+    int *y;
 
     double diffTime;
     double totalTime;
@@ -16,13 +21,14 @@ int main()
     clock_t end;
 
     ix = 0;
-    int p[n];
+    p = (int *) malloc (n * sizeof(int));
     for (ix = 0; ix < n; ++ix)
     {
         p[ix] = ix;
     }
 
-    int x[n]; int y[n];
+    x = (int *) malloc (n * sizeof(int));
+    y = (int *) malloc (n * sizeof(int));
     for (ix = 0; ix < n; ++ix)
     {
         x[ix] = ix % 10;

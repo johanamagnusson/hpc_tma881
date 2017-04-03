@@ -34,3 +34,6 @@
 
 # SCons
 *.sconsign.dblite
+
+# Vim
+*.swp
