@@ -26,7 +26,7 @@ As we can see, doing it in the same file is the fastes way. Since this is a simp
 # Valgrind
 
 When running the program, we get the following output:
-...
+```
 ==24266== Memcheck, a memory error detector
 ==24266== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
 ==24266== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
@@ -52,7 +52,7 @@ When running the program, we get the following output:
 ==24266==
 ==24266== For counts of detected and suppressed errors, rerun with: -v
 ==24266== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
-...
+```
 
 Here, we can see under HEAP SUMMARY that there still is some memory in use when the program is done. Since this is 4000 bytes, we know that this is exactly the memory we allocated. The total heap usage is for our for loop and the summation.
 
