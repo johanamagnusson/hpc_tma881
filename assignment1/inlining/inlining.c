@@ -17,7 +17,7 @@ void mul_cpx(
 
 int main()
 {
-	const unsigned long int times = 100000;
+	const unsigned long int times = 10000;
     clock_t start;
     clock_t end;
     double timeDiff;
@@ -30,13 +30,32 @@ int main()
 	double b[n][2];
 	double c[n][2];
 
-    for ( int i=0; i<n; ++i )
+    totTime = 0.0;
+
+    for ( int j=0; j<times; j++ )
     {
-        b[i][0] = (rand() % n);
-        b[i][1] = (rand() % n);
-        c[i][0] = (rand() % n);
-        c[i][1] = (rand() % n);
+
+        start = clock();
+
+        for ( int i=0; i<n; ++i )
+        {
+            b[i][0] = (rand() % n);
+            b[i][1] = (rand() % n);
+            c[i][0] = (rand() % n);
+            c[i][1] = (rand() % n);
+            a[i][0] = (b[i][0] * c[i][0]) - (b[i][1] * c[i][1]);
+            a[i][1] = (b[i][0] * c[i][1]) + (b[i][1] * c[i][0]);
+        }
+
+        end = clock();
+        timeDiff = ((end - start) / (double) CLOCKS_PER_SEC) * 1000;
+        totTime += timeDiff;
     }
+
+    aveTime = totTime / times;
+
+    printf("Time measured when multiplying directly: %.8f ms\n", aveTime);
+
 
     totTime = 0.0;
 
