@@ -58,15 +58,25 @@ When running the program, we get the following output:
 ==24266==    by 0x400598: main (in /home/hpc10/hpc_tma881/assignment1/valgrind/leak)
 
 ==24266==
+
 ==24266== LEAK SUMMARY:
+
 ==24266==    definitely lost: 4,000 bytes in 1 blocks
+
 ==24266==    indirectly lost: 0 bytes in 0 blocks
+
 ==24266==      possibly lost: 0 bytes in 0 blocks
+
 ==24266==    still reachable: 0 bytes in 0 blocks
+
 ==24266==         suppressed: 0 bytes in 0 blocks
+
 ==24266==
+
 ==24266== For counts of detected and suppressed errors, rerun with: -v
+
 ==24266== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+
 
 Here, we can see under HEAP SUMMARY that there still is some memory in use when the program is done. Since this is 4000 bytes, we know that this is exactly the memory we allocated. The total heap usage is for our for loop and the summation.
 
