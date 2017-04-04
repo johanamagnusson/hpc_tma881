@@ -11,4 +11,4 @@ clean :
 	rm -f leak leak.o
 
 run :
-	valgrind --leak-check=yes ./leak
+	valgrind --leak-check=yes --log-file=valgrindout.txt ./leak
