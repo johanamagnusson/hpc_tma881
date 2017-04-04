@@ -30,21 +30,26 @@ int main()
 	double b[n][2];
 	double c[n][2];
 
-    totTime = 0.0;
+    for ( int i=0; i<n; ++i )
+    {
+        b[i][0] = (rand() % n);
+        b[i][1] = (rand() % n);
+        c[i][0] = (rand() % n);
+        c[i][1] = (rand() % n);
+    }
+
+    totTime = 0;
 
     for ( int j=0; j<times; j++ )
     {
-
         start = clock();
 
-        for ( int i=0; i<n; ++i )
+        for (int i=0; i<n; i++ )
         {
-            b[i][0] = (rand() % n);
-            b[i][1] = (rand() % n);
-            c[i][0] = (rand() % n);
-            c[i][1] = (rand() % n);
-            a[i][0] = (b[i][0] * c[i][0]) - (b[i][1] * c[i][1]);
-            a[i][1] = (b[i][0] * c[i][1]) + (b[i][1] * c[i][0]);
+
+        a[i][0] = (b[i][0] * c[i][0]) - (b[i][1] * c[i][1]);
+        a[i][1] = (b[i][0] * c[i][1]) + (b[i][1] * c[i][0]);
+
         }
 
         end = clock();
@@ -54,14 +59,10 @@ int main()
 
     aveTime = totTime / times;
 
-    printf("Time measured when multiplying directly: %.8f ms\n", aveTime);
-
-
-    totTime = 0.0;
+    printf("Time measured when multiplying directly in code: %.8f ms\n", aveTime);
 
     for ( int j=0; j<times; j++ )
     {
-
         start = clock();
 
         for ( int i=0; i<n; ++i)
