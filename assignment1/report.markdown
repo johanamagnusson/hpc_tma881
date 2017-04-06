@@ -95,13 +95,32 @@ Time measured when multiplying in a function in the main file: 0.516ms
 
 Time measured when multiplying in a separate file: 0.294ms
 
-The time was calculated by doing the multiplication for the 30000 values 10000 times, and then taking the averege.
+The time was calculated by doing the multiplication for the 30000 values 10000 times, and then taking the average.
 
-As we can see, doing it in the same file is the fastes way. Since this is a simple multiplication, it is not so strange that this is the fastes way. About the other two, we do not really know why it is faster to call on a function in a separate file then a function in the main file. It might be that when we include the separate file, we get to know the functions of that file, and it is faster to find those functions implemented then those we have to "search" for in the main file.
+As we can see, doing it in the same file is the fastest way. Since this is a simple multiplication, it is not so strange that this is the fastest way. About the other two, we do not really know why it is faster to call on a function in a separate file then a function in the main file. It might be that when we include the separate file, we get to know the functions of that file, and it is faster to find those functions implemented then those we have to "search" for in the main file.
 
 # Locality
 
 # Indirect adressing
+Running the program with O0 and O3 gives the following output:
+```
+O0 (no optimization)
+--- Indirect addressing ---
+Time measured: 4.54487520 ms
+
+--- Direct addressing ---
+Time measured: 2.79877630 ms
+
+O3 (full optimization)
+--- Indirect addressing ---
+Time measured: 0.92400360 ms
+
+--- Direct addressing ---
+Time measured: 0.36380260 ms
+```
+As expected it runs faster with full optimization, but using direct addressing as opposed to indirect also have a significant effect on speed. The reason for this is that for direct addressing the address is contained in the instruction as while for indirect addressing it is stored in a register and therefore has to be fetched before used. To read from the register obviously takes more time.
+(To acquire this information we used Google and found a very nice post on Quora explaining it to us. The link to the answers: https://www.quora.com/What-is-the-difference-between-a-direct-and-an-indirect-address-instruction)
+
 
 # Valgrind
 
