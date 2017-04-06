@@ -5,6 +5,86 @@
 
 # Time
 
+When running our sum program with the different flags from our makefile, we get the following estimates when taking an average over 1000 times:
+
+Time -O0 2986.69 ms
+
+Time -O1 336.06 ms
+
+Time -O2 0.00039 ms
+
+Time -O3 0.00036 ms
+
+Time -Os 0.00036 ms
+
+Time -Og 333.92 ms
+
+As we can see, -O0 is in a instance for itself (terrible), -O1 and -Og is average and -O2 -O3 and -Os is very good.
+
+When looking into the assembler files, this is what we see in timeO0.s:
+```
+.L5:
+    movq    $0, -72(%rbp)
+    call    clock
+    movq    %rax, -32(%rbp)
+    movq    $1, -64(%rbp)
+    jmp .L3
+.L4:
+    movq    -64(%rbp), %rax
+    addq    %rax, -72(%rbp)
+    addq    $1, -64(%rbp)
+.L3:
+    movq    -64(%rbp), %rax
+    cmpq    -40(%rbp), %rax
+    jbe .L4
+    call clock
+```
+As we can see, every time we add a new value in our loop, we also make a movq (move a 64-bit), and this takes a lot of time. Then, imagine doing this one billion times, which we do...
+
+In -O1 and -Og
+
+timeO1.s:
+```
+.L3:
+    call    clock
+    movq    %rax, %rbp
+    movl    $1, %eax
+.L2:
+    addq    $1, %rax
+    cmpq    $1000000001, %rax
+    jne .L2
+    call    clock
+```
+
+timeOg.s:
+```
+.L5:
+    call    clock
+    movq    %rax, %r12
+    movl    $1, %eax
+    movl    $0, %ebx
+    jmp .L3
+.L4:
+    addq    $rax, %rbx
+    addq    $1, %rax
+.L3:
+    cmpq    $1000000000, %rax
+    jbe .L4
+    call    clock
+```
+Here, we can see that we doesn't make any movq or movl in the loop, which is good. The only thing really taking time is the initially moq and movl, and then the actual loop with addq and compare.
+
+Now, for the best ones, -O2, -O3 and -Os, the assembler code around call clock all look the same:
+
+```
+.L2:
+    call    clock
+    movq    %rax, %rbp
+    call    clock
+```
+
+The movq we make here is more or less only for the clock function itself. As we can see, no add is made and no compare, so basically the sum is not done. But, for these optimizations, the compiler is clever enough to realize that we are making a arithmetic sum, so it already know what the answer will be. Therefore, the clock is not really needed, and the only thing we measure is the clock itself.
+
 # Inlining
 
 When running the code, measuring the time it takes for multiplying in the main file, in a function in the main file and a separate file for the function, we get the following measurments:
