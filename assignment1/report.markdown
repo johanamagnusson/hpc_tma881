@@ -38,7 +38,8 @@ Time measured: 0.92400360 ms
 --- Direct addressing ---
 Time measured: 0.36380260 ms
 ```
-As expected it runs faster with full optimization, but using direct addressing as opposed to indirect also have a significant effect on speed.
+As expected it runs faster with full optimization, but using direct addressing as opposed to indirect also have a significant effect on speed. The reason for this is that for direct addressing the address is contained in the instruction as while for indirect addressing it is stored in a register and therefore has to be fetched before used. To read from the register obviously takes more time.
+(To acquire this information we used Google and found a very nice post on Quora explaining it to us. The link to the answers: https://www.quora.com/What-is-the-difference-between-a-direct-and-an-indirect-address-instruction)
 
 
 # Valgrind
