@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#define NUMBER_OF_ITERATIONS 1
+#define NUMBER_OF_ITERATIONS 1000
 
 int main()
 {

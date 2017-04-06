@@ -1,0 +1,14 @@
+O0
+--- Indirect addressing ---
+Time measured: 4.54487520 ms
+
+--- Direct addressing ---
+Time measured: 2.79877630 ms
+
+O3
+--- Indirect addressing ---
+Time measured: 0.92400360 ms
+
+--- Direct addressing ---
+Time measured: 0.36380260 ms
+
