@@ -39,7 +39,7 @@ When looking into the assembler files, this is what we see in timeO0.s:
     jbe .L4
     call clock
 ```
-As we can see, every time we add a new value in our loop, we also make a movq (move a 64-bit), and this takes a lot of time. Then, imagine doing this one billion times, which we do...
+As we can see, every time we add a new value in our loop we also make a movq (move a 64-bit) which takes a lot of time compared to for example add-operators. Doing this one billion times takes a substantial amount time.
 
 In -O1 and -Og
 
@@ -72,9 +72,9 @@ timeOg.s:
     jbe .L4
     call    clock
 ```
-Here, we can see that we doesn't make any movq or movl in the loop, which is good. The only thing really taking time is the initially moq and movl, and then the actual loop with addq and compare.
+Here we can see that we don't make any movq or movl in the loop which is good. The only thing that really takes time is the initial movq and movl, and then the actual loop with addq and compare.
 
-Now, for the best ones, -O2, -O3 and -Os, the assembler code around call clock all look the same:
+Now for the best ones, -O2, -O3 and -Os, the assembler code around call clock all look the same:
 
 ```
 .L2:
@@ -83,11 +83,11 @@ Now, for the best ones, -O2, -O3 and -Os, the assembler code around call clock a
     call    clock
 ```
 
-The movq we make here is more or less only for the clock function itself. As we can see, no add is made and no compare, so basically the sum is not done. But, for these optimizations, the compiler is clever enough to realize that we are making a arithmetic sum, so it already know what the answer will be. Therefore, the clock is not really needed, and the only thing we measure is the clock itself.
+The movq we make here is more or less only for the clock function itself. As we can see, no add is made and no compare, so basically the sum is not done. But for these optimizations the compiler is clever enough to realize that we are making an arithmetic sum, so it already knows what the answer will be. Therefore the only thing the clock calls  measures is the clock itself and the time measurement here is not really saying anything about the performance. If we used bash time instead we would have gotten what actually takes time for this program, which are the allocations.
 
 # Inlining
 
-When running the code, measuring the time it takes for multiplying in the main file, in a function in the main file and a separate file for the function, we get the following measurments:
+When running the code, measuring the time it takes for multiplying in the main file using a function in the main file and a separate file for the function, we get the following measurements:
 
 Time measured when multiplying directly in code: 0.225 ms
 
@@ -95,9 +95,9 @@ Time measured when multiplying in a function in the main file: 0.516ms
 
 Time measured when multiplying in a separate file: 0.294ms
 
-The time was calculated by doing the multiplication for the 30000 values 10000 times, and then taking the average.
+The time was calculated by doing the multiplication for the 30000 values 10000 times and then taking the average.
 
-As we can see, doing it in the same file is the fastest way. Since this is a simple multiplication, it is not so strange that this is the fastest way. About the other two, we do not really know why it is faster to call on a function in a separate file then a function in the main file. It might be that when we include the separate file, we get to know the functions of that file, and it is faster to find those functions implemented then those we have to "search" for in the main file.
+As we can see doing it in the same file is the fastest way. Since this is a simple multiplication, it is not so strange that this is the fastest way. About the other two we do not really know why it is faster to call on a function in a separate file then a function in the main file. It might be that when we include the separate file, we get to know the functions of that file, and it is faster to find those functions implemented then those we have to "search" for in the main file.
 
 # Locality
 
@@ -109,11 +109,11 @@ The average time for the functions row\_sum, col\_sum and fast\_col\_sum (the fa
 | col\_sum      | 3.269760 ms                          | 1.20576 ms                           | 531.859950 ms                         | 376.524280 ms                         |
 | fast\_col\_sum | 3.021940 ms                          | 0.992780 ms                          | 312.184540 ms                         | 118.912390 ms                         |
 
-Running the functions in different order gave different results due to cold cache. Therefore loops without timings were first run to make the chache hot and the measuerments non biased. As expected the -O3 flag performed better than -O0. That the function col\_sum performed worst was also expected. That is because the rows of the matrix are stored after each other in memory. The L1d cache for ozzy is 32kB and can therefore store four rows of the matrix at a time (sizeof(double)\*1000 = 8kB). col\_sum will as for one value from each row of the matrix at a time. Since only four matrix rows are stored in L1d the rest of the matrix will be found in L2 and L3 and slow down the process of fetching data. row\_sum and fast\_col\_sum are faster because they are able to directly fetch the matrix values from L1 since they only use one matrix row at a time. 
-With larger matrix size the time difference increases between the fast and the naive implementation of suming the columns. This is because that even more data has to be fetched from memory of higher level. 
-Even if all the resulst were antisipated, the time difference between the fast and naive implementations were expected to be larger since it takes 5 more clock cycles to fetch data from L3 than from L1. 
+Running the functions in different order gave different results due to cold cache. Therefore loops without timings were first run to make the cache hot and the measurements non biased. As expected the -O3 flag performed better than -O0. That the function col\_sum performed worst was also expected. That is because the rows of the matrix are stored after each other in memory. The L1d cache for Ozzy is 32kB and can therefore store four rows of the matrix at a time (sizeof(double)\*1000 = 8kB). col\_sum will as for one value from each row of the matrix at a time. Since only four matrix rows are stored in L1d the rest of the matrix will be found in L2 and L3 and slow down the process of fetching data. row\_sum and fast\_col\_sum are faster because they are able to directly fetch the matrix values from L1 since they only use one matrix row at a time. 
+With larger matrix size the time difference increases between the fast and the naive implementation of summing the columns. This is because that even more data has to be fetched from memory of higher level. 
+Even if all the result were anticipated, the time difference between the fast and naive implementations were expected to be larger since it takes 5 more clock cycles to fetch data from L3 than from L1. 
 
-# Indirect adressing
+# Indirect addressing
 Running the program with O0 and O3 gives the following output:
 ```
 O0 (no optimization)
@@ -167,7 +167,7 @@ When running the program, we get the following output:
 
 Here, we can see under HEAP SUMMARY that there still is some memory in use when the program is done. Since this is 4000 bytes, we know that this is exactly the memory we allocated. The total heap usage is for our for loop and the summation.
 
-Under LEAK SUMMARY, we can see that the space we allocated is definitly lost. When reading up on valgrid, definitly lost means that there is no pointer to this block when the file is done. This is not so strange, since we only allocate the space, but do not use it.
+Under LEAK SUMMARY, we can see that the space we allocated is definitely lost. When reading up on valgrind, definitely lost means that there is no pointer to this block when the file is done. This is not so strange, since we only allocate the space, but do not use it.
 
 # Profiling
 
@@ -177,7 +177,7 @@ gprof predicts that the program will take 1.91 seconds. Running the program with
 
 ##gcov
 
-The lines of code that are run second nesteled for-loop int the sums functions (lines 7, 17 and 27). They are all run 200200000 times. The reason why the line initializing the loop is run more than the lines insede the code (200000000) is because at the last iteration of the loop, the if statement that terminates the loop is runs and makes sure to skip the code inside the loop. 
+The lines of code that are run second nestled for-loop int the sums functions (lines 7, 17 and 27). They are all run 200200000 times. The reason why the line initializing the loop is run more than the lines inside the code (200000000) is because at the last iteration of the loop, the if statement that terminates the loop is runs and makes sure to skip the code inside the loop. 
 
 
 
