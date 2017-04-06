@@ -21,6 +21,18 @@ As we can see, doing it in the same file is the fastes way. Since this is a simp
 
 # Locality
 
+The average time for the functions row\_sum, col\_sum and fast\_col\_sum (the faster implementation of col\_sum) were averaged over 100 runs each. This was done for with the flags: -O0 and -O3 and the matrix sizes: 1000\*1000 and 10000\*10000. The results are shown in the following table:  
+
+| Function     | Average time (flag: -O0, size: 1000) | Average time (flag: -O3, size: 1000) | Average time (flag: -O0, size: 10000) | Average time (flag: -O3, size: 10000) |
+|--------------|--------------------------------------|--------------------------------------|---------------------------------------|---------------------------------------|
+| row\_sum      | 3.014390 ms                          | 0.981410 ms                          | 303.767630 ms                         | 114.247040 ms                         |
+| col\_sum      | 3.269760 ms                          | 1.20576 ms                           | 531.859950 ms                         | 376.524280 ms                         |
+| fast\_col\_sum | 3.021940 ms                          | 0.992780 ms                          | 312.184540 ms                         | 118.912390 ms                         |
+
+Running the functions in different order gave different results due to cold cache. Therefore loops without timings were first run to make the chache hot and the measuerments non biased. As expected the -O3 flag performed better than -O0. That the function col\_sum performed worst was also expected. That is because the rows of the matrix are stored after each other in memory. The L1d cache for ozzy is 32kB and can therefore store four rows of the matrix at a time (sizeof(double)\*1000 = 8kB). col\_sum will as for one value from each row of the matrix at a time. Since only four matrix rows are stored in L1d the rest of the matrix will be found in L2 and L3 and slow down the process of fetching data. row\_sum and fast\_col\_sum are faster because they are able to directly fetch the matrix values from L1 since they only use one matrix row at a time. 
+With larger matrix size the time difference increases between the fast and the naive implementation of suming the columns. This is because that even more data has to be fetched from memory of higher level. 
+Even if all the resulst were antisipated, the time difference between the fast and naive implementations were expected to be larger since it takes 5 more clock cycles to fetch data from L3 than from L1. 
+
 # Indirect adressing
 
 # Valgrind
@@ -59,3 +71,19 @@ Here, we can see under HEAP SUMMARY that there still is some memory in use when 
 Under LEAK SUMMARY, we can see that the space we allocated is definitly lost. When reading up on valgrid, definitly lost means that there is no pointer to this block when the file is done. This is not so strange, since we only allocate the space, but do not use it.
 
 # Profiling
+
+##gprof
+
+gprof predicts that the program will take 1.91 seconds. Running the program with bash time gives run time 0.135 seconds which is much faster than predicted. gprof also predicts that col\_sum, row\_sum will and fast\_col\_sum will take respectively 3.25 ms, 3.25 ms and 3.05 ms. This is very close to the result given in the table in section locality (for -O0 and size 1000).
+
+##gcov
+
+The lines of code that are run second nesteled for-loop int the sums functions (lines 7, 17 and 27). They are all run 200200000 times. The reason why the line initializing the loop is run more than the lines insede the code (200000000) is because at the last iteration of the loop, the if statement that terminates the loop is runs and makes sure to skip the code inside the loop. 
+
+
+
+
+
+
+
+
