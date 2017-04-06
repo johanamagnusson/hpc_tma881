@@ -1,0 +1,19 @@
+All benchmarks run in order O0, O1, O2, O3, Os, Og
+Sum = 500000000500000000
+Time measured: 2986.69488700 ms
+
+Sum = 500000000500000000
+Time measured: 336.06263900 ms
+
+Sum = 500000000500000000
+Time measured: 0.00039300 ms
+
+Sum = 500000000500000000
+Time measured: 0.00036300 ms
+
+Sum = 500000000500000000
+Time measured: 0.00035800 ms
+
+Sum = 500000000500000000
+Time measured: 333.91772500 ms
+

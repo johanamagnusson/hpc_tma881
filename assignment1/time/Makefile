@@ -43,4 +43,5 @@ clean :
 	rm -f  *.o assembler *.s $(EXE)
 
 time :
-	@$(foreach exe, $(EXE), ./$(exe);)
+	@echo "All benchmarks run in order O0, O1, O2, O3, Os, Og"
+	@$(foreach exe, $(EXE),  ./$(exe);)

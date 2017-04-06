@@ -5,6 +5,86 @@
 
 # Time
 
+When running our sum program with the different flags from our makefile, we get the following estimates when taking an average over 1000 times:
+
+Time -O0 2986.69 ms
+
+Time -O1 336.06 ms
+
+Time -O2 0.00039 ms
+
+Time -O3 0.00036 ms
+
+Time -Os 0.00036 ms
+
+Time -Og 333.92 ms
+
+As we can see, -O0 is in a instance for itself (terrible), -O1 and -Og is average and -O2 -O3 and -Os is very good.
+
+When looking into the assembler files, this is what we see in timeO0.s:
+```
+.L5:
+    movq    $0, -72(%rbp)
+    call    clock
+    movq    %rax, -32(%rbp)
+    movq    $1, -64(%rbp)
+    jmp .L3
+.L4:
+    movq    -64(%rbp), %rax
+    addq    %rax, -72(%rbp)
+    addq    $1, -64(%rbp)
+.L3:
+    movq    -64(%rbp), %rax
+    cmpq    -40(%rbp), %rax
+    jbe .L4
+    call clock
+```
+As we can see, every time we add a new value in our loop, we also make a movq (move a 64-bit), and this takes a lot of time. Then, imagine doing this one billion times, which we do...
+
+In -O1 and -Og
+
+timeO1.s:
+```
+.L3:
+    call    clock
+    movq    %rax, %rbp
+    movl    $1, %eax
+.L2:
+    addq    $1, %rax
+    cmpq    $1000000001, %rax
+    jne .L2
+    call    clock
+```
+
+timeOg.s:
+```
+.L5:
+    call    clock
+    movq    %rax, %r12
+    movl    $1, %eax
+    movl    $0, %ebx
+    jmp .L3
+.L4:
+    addq    $rax, %rbx
+    addq    $1, %rax
+.L3:
+    cmpq    $1000000000, %rax
+    jbe .L4
+    call    clock
+```
+Here, we can see that we doesn't make any movq or movl in the loop, which is good. The only thing really taking time is the initially moq and movl, and then the actual loop with addq and compare.
+
+Now, for the best ones, -O2, -O3 and -Os, the assembler code around call clock all look the same:
+
+```
+.L2:
+    call    clock
+    movq    %rax, %rbp
+    call    clock
+```
+
+The movq we make here is more or less only for the clock function itself. As we can see, no add is made and no compare, so basically the sum is not done. But, for these optimizations, the compiler is clever enough to realize that we are making a arithmetic sum, so it already know what the answer will be. Therefore, the clock is not really needed, and the only thing we measure is the clock itself.
+
 # Inlining
 
 When running the code, measuring the time it takes for multiplying in the main file, in a function in the main file and a separate file for the function, we get the following measurments:
@@ -15,9 +95,9 @@ Time measured when multiplying in a function in the main file: 0.516ms
 
 Time measured when multiplying in a separate file: 0.294ms
 
-The time was calculated by doing the multiplication for the 30000 values 10000 times, and then taking the averege.
+The time was calculated by doing the multiplication for the 30000 values 10000 times, and then taking the average.
 
-As we can see, doing it in the same file is the fastes way. Since this is a simple multiplication, it is not so strange that this is the fastes way. About the other two, we do not really know why it is faster to call on a function in a separate file then a function in the main file. It might be that when we include the separate file, we get to know the functions of that file, and it is faster to find those functions implemented then those we have to "search" for in the main file.
+As we can see, doing it in the same file is the fastest way. Since this is a simple multiplication, it is not so strange that this is the fastest way. About the other two, we do not really know why it is faster to call on a function in a separate file then a function in the main file. It might be that when we include the separate file, we get to know the functions of that file, and it is faster to find those functions implemented then those we have to "search" for in the main file.
 
 # Locality
 
@@ -34,6 +114,25 @@ With larger matrix size the time difference increases between the fast and the n
 Even if all the resulst were antisipated, the time difference between the fast and naive implementations were expected to be larger since it takes 5 more clock cycles to fetch data from L3 than from L1. 
 
 # Indirect adressing
+Running the program with O0 and O3 gives the following output:
+```
+O0 (no optimization)
+--- Indirect addressing ---
+Time measured: 4.54487520 ms
+
+--- Direct addressing ---
+Time measured: 2.79877630 ms
+
+O3 (full optimization)
+--- Indirect addressing ---
+Time measured: 0.92400360 ms
+
+--- Direct addressing ---
+Time measured: 0.36380260 ms
+```
+As expected it runs faster with full optimization, but using direct addressing as opposed to indirect also have a significant effect on speed. The reason for this is that for direct addressing the address is contained in the instruction as while for indirect addressing it is stored in a register and therefore has to be fetched before used. To read from the register obviously takes more time.
+(To acquire this information we used Google and found a very nice post on Quora explaining it to us. The link to the answers: https://www.quora.com/What-is-the-difference-between-a-direct-and-an-indirect-address-instruction)
+
 
 # Valgrind
 
