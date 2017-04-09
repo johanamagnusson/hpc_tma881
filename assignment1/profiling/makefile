@@ -1,5 +1,5 @@
 CC     = gcc
-CFLAGS = -O3
+CFLAGS = -pg -ftest-coverage -fprofile-arcs
 
 .PHONY : all
 

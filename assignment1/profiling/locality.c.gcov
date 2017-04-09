@@ -1,0 +1,125 @@
+        -:    0:Source:locality.c
+        -:    0:Graph:locality.gcno
+        -:    0:Data:locality.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:#include <stdio.h>
+        -:    2:#include <time.h>
+        -:    3:#include <stdlib.h>
+      200:    4:void row_sums( double * sums, const double ** matrix, size_t nrs, size_t ncs){
+   200200:    5:    for ( size_t ix=0; ix < nrs; ++ix ){
+   200000:    6:        double sum = 0;
+200200000:    7:        for ( size_t jx=0; jx < ncs; ++jx ){
+200000000:    8:            sum += matrix[ix][jx];
+        -:    9:        }
+   200000:   10:        sums[ix] = sum;
+        -:   11:    }   
+      200:   12:}
+        -:   13:
+      200:   14:void col_sums(double * sums, const double ** matrix, size_t nrs, size_t ncs){
+   200200:   15:    for ( size_t jx=0; jx < ncs; ++jx ){
+   200000:   16:        double sum = 0;
+200200000:   17:        for ( size_t ix=0; ix < nrs; ++ix ){
+200000000:   18:            sum += matrix[ix][jx];
+        -:   19:        }
+   200000:   20:        sums[jx] = sum;
+        -:   21:    }
+      200:   22:}
+        -:   23:
+        -:   24:
+      200:   25:void col_sums_fast( double * sums, const double ** matrix, size_t nrs, size_t ncs){
+   200200:   26:    for ( size_t ix=0; ix < nrs; ++ix ){
+200200000:   27:        for ( size_t jx=0; jx < ncs; ++jx ){
+200000000:   28:            sums[ix] += matrix[ix][jx];
+        -:   29:        }
+        -:   30:    }   
+      200:   31:}
+        -:   32:
+        -:   33:
+        -:   34:
+        1:   35:double ** mk_mat(size_t col_size, size_t row_size){
+        1:   36:    double **matrix = malloc(sizeof(double *) * row_size);
+        1:   37:    matrix[0] = malloc(row_size * col_size * sizeof(double));
+     1001:   38:    for(size_t i = 0; i < col_size; i++)
+     1000:   39:       matrix[i] = matrix[0] + i*col_size; 
+        -:   40:
+     1001:   41:    for(size_t ix = 0; ix < col_size; ++ix){
+  1001000:   42:        for(size_t jx = 0; jx < row_size; ++jx){
+  1000000:   43:            *((*(matrix)) + (ix * col_size + jx)) = 42.0/1000;
+        -:   44:        }
+        -:   45:    }
+        1:   46:    return matrix;
+        -:   47:}
+        -:   48:
+        -:   49:
+        1:   50:int main(){
+        1:   51:    size_t matrix_size = 1000;
+        1:   52:    size_t nbr = 100;
+        -:   53:    double *row_sum;
+        -:   54:    double *col_sum;
+        -:   55:    double *col_sum_fast;
+        -:   56:    const double **mat;
+        -:   57:    time_t start;
+        -:   58:    time_t end;
+        -:   59:    double diff;
+        -:   60:    double averageTime;
+        -:   61:
+        1:   62:    row_sum = (double*)malloc(matrix_size * sizeof(double));
+        1:   63:    col_sum = (double*)malloc(matrix_size * sizeof(double));
+        1:   64:    col_sum_fast = (double*)malloc(matrix_size * sizeof(double));
+        1:   65:    mat =(const double **) mk_mat(matrix_size, matrix_size);
+        -:   66:    
+        -:   67:    //---------------------- Naive row sum ----------------------
+      101:   68:    for(size_t i = 0; i < nbr; i++)
+      100:   69:        row_sums(row_sum, mat, matrix_size, matrix_size);
+        -:   70:    
+        1:   71:    start = clock();
+      101:   72:    for(size_t i = 0; i < nbr; i++)
+      100:   73:        row_sums(row_sum, mat, matrix_size, matrix_size);
+        -:   74: 
+        1:   75:    end = clock();
+        1:   76:    diff = ((end - start) / (double) CLOCKS_PER_SEC) * 1000; //ms
+        -:   77:
+        1:   78:    averageTime = diff/(double)nbr;
+        1:   79:    printf("Naive row sum average time in ms: %f\n", averageTime); 
+        -:   80:    
+        -:   81:    //---------------------- Naive col sum ----------------------
+        -:   82:    
+      101:   83:    for(size_t i = 0; i < nbr; i++)
+      100:   84:        col_sums(col_sum, mat, matrix_size, matrix_size);
+        -:   85:    
+        1:   86:    start = clock();
+      101:   87:    for(size_t i = 0; i < nbr; i++)
+      100:   88:        col_sums(col_sum, mat, matrix_size, matrix_size);
+        -:   89: 
+        1:   90:    end = clock();
+        1:   91:    diff = ((end - start) / (double) CLOCKS_PER_SEC) * 1000; //ms
+        -:   92:
+        1:   93:    averageTime = diff/(double)nbr;
+        1:   94:    printf("Naive column sum average time in ms: %f\n", averageTime); 
+        -:   95:    
+        -:   96:    
+        -:   97:    //---------------------- right col sum ----------------------
+        -:   98:    
+      101:   99:    for(size_t i = 0; i < nbr; i++)
+      100:  100:        col_sums_fast(col_sum_fast, mat, matrix_size, matrix_size);
+        -:  101:    
+        1:  102:    start = clock();
+      101:  103:    for(size_t i = 0; i < nbr; i++)
+      100:  104:        col_sums_fast(col_sum_fast, mat, matrix_size, matrix_size);
+        -:  105: 
+        1:  106:    end = clock();
+        1:  107:    diff = ((end - start) / (double) CLOCKS_PER_SEC) * 1000; //ms
+        -:  108:
+        1:  109:    averageTime = diff/(double)nbr;
+        1:  110:    printf("fast column sum average time in ms: %f\n", averageTime); 
+        -:  111:    
+        -:  112:    
+        1:  113:    free(mat);
+        1:  114:    free(row_sum);
+        1:  115:    free(col_sum);
+        1:  116:    free(col_sum_fast);
+        1:  117:    return 0;   
+        -:  118:}
+        -:  119:
+        -:  120:

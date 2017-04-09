@@ -1,4 +1,4 @@
-All benchmarks run in order O0, O1, O2, O3, Og, Os
+All benchmarks run in order O0, O1, O2, O3, Os, Og
 Sum = 500000000500000000
 Time measured: 2986.69488700 ms
 
