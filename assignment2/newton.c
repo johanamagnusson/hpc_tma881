@@ -1,31 +1,72 @@
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <argp.h>
 
+
+
+struct arguments
+{
+    int t;
+    int l;
+    int d;
+};
+
+static int
+parse_opt(int key, char *arg,
+        struct argp_state *state)
+{
+    struct arguments *arguments = state -> input;
+    switch (key)
+    {
+        case 't':
+            {
+                arguments -> t = atoi(arg);
+                break;
+            }
+        case 'l':
+            {
+                arguments -> l = atoi(arg);
+                break;
+            }
+        case ARGP_KEY_ARG:
+            {
+                if (state -> arg_num >= 1)
+                    argp_failure (state, 1, 0, "too many arguments");
+                arguments -> d = atoi(arg);
+            }
+            break;
+        case ARGP_KEY_END:
+            {
+                if (state -> arg_num < 1)
+                    argp_failure (state, 1, 0, "too few arguments");
+            }
+            break;
+    }
+    return 0;
+}
+
+struct argp_option options[] =
+{
+    {"threads", 't', "NUM", 0, "The number of threads to use"},
+    {"lines", 'l', "NUM", 0, "The size of the picture"},
+    {0}
+};
+
+struct argp argp = { options, parse_opt, 0, 0 };
 
 int main(int argc, char **argv)
 {
-    int tvalue = 0;
-    int lvalue = 0;
-    int dvalue = 0;
-    int c;
+    
+    struct arguments arguments;
+
+    argp_parse (&argp, argc, argv, 0, 0, &arguments); 
+
+    int tvalue = arguments.t;
+    int lvalue = arguments.l;
+    int dvalue = arguments.d;
     int i;
 
-    while ((c = getopt(argc, argv, "t l (d)")) != -1)
-        switch(c)
-        {
-            case 't':
-                tvalue = optarg;
-                break;
-            case 'l':
-                lvalue = optarg;
-                break;
-            default:
-                abort ();
-        }
+    printf("t = %d, l = %d, d = %d\n", tvalue, lvalue, dvalue);
 
-    for (i = optind; i < argc; i++)
-    {
-        dvalue = argv[i];
-    }
-    printf("t = %d, l = %d, d = %d", tvalue, lvalue, dvalue);
+    return 0;
 }
