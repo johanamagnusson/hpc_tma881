@@ -1,11 +1,14 @@
+OBJS = newton.o
+LIBS = -lm 
+CC = gcc
+CLFAGS = -O0
 .PHONY : all
 
 all : newton
 
-newton : newton.o
-	gcc -o newton newton.o
+newton : $(OBJS)
+	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS)
 
 newton.o : newton.c
-
 clean :
 	rm -f newton newton.o
