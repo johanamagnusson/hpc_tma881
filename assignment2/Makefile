@@ -1,5 +1,5 @@
 OBJS = newton.o
-LIBS = -lm 
+LIBS = -lm -lpthread
 CC = gcc
 CLFAGS = -O0
 .PHONY : all
@@ -10,5 +10,6 @@ newton : $(OBJS)
 	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS)
 
 newton.o : newton.c
+
 clean :
 	rm -f newton newton.o
