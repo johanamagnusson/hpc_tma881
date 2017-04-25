@@ -49,6 +49,13 @@ struct newton{
     int iterations;
     int root; //might be represented as the complex root:W
 };
+
+static double complex complex_representation(int i, int l){
+   double real_diff = (4./(double)(l-1))*(i%l);
+   double imag_diff = (4./(double)(l-1))*(i/l);
+   return (-2. + real_diff) + (2. - imag_diff)*I;
+}
+
 static struct newton newtons_method(double complex x_0, int d){
     int iteration = 1;
     double limit = 0.001;
@@ -94,6 +101,7 @@ int main(int argc, char **argv)
     double complex z = -3.0 + 1.0 * I;
     struct newton n = newtons_method(z, dvalue);
     printf("iterations = %d\n", n.iterations);
-    
+
+
     return 0;
 }
