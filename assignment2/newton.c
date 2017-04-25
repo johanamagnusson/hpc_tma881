@@ -7,6 +7,7 @@
 
 
 int counter = 0;
+int *a;
 
 struct arguments
 {
@@ -82,9 +83,11 @@ pthread_mutex_t stopIt;
 void *Count(void *c)
 {
     pthread_mutex_lock( &stopIt );
+    a[counter] = counter;
     counter = counter + 1;
     printf("Counter: %d\n", counter);
     pthread_mutex_unlock( &stopIt );
+
     pthread_exit(NULL);
 }
 
@@ -116,6 +119,8 @@ int main(int argc, char **argv)
     struct newton n = newtons_method(z, dvalue);
     printf("iterations = %d\n", n.iterations);
 
+    a = (int *) malloc(2*sizeof(int));
+
     int NUM_THREADS = 2;
 
     pthread_t threads[NUM_THREADS];
@@ -130,6 +135,8 @@ int main(int argc, char **argv)
         pthread_join(threads[i], NULL);
     }
 
+    printf("Here is the array\n %d\n", a[0]);
+    printf("%d\n", a[1]);
 
     char fname[PATH_MAX];
     snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", dvalue);
