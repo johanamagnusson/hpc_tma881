@@ -103,5 +103,17 @@ int main(int argc, char **argv)
     printf("iterations = %d\n", n.iterations);
 
 
+    char fname[PATH_MAX];
+    snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", dvalue);
+    FILE * fatt = fopen(fname, "w");
+    fprintf(fatt, "P3\n%d %d\n255\n", lvalue, lvalue);
+    fclose(fatt);
+
+    snprintf(fname, PATH_MAX, "newton_convergence_x%d.ppm", dvalue);
+    FILE * fcon = fopen(fname, "w");
+    fprintf(fcon, "P3\n%d %d\n255\n", lvalue, lvalue);
+    fclose(fcon);
+
+    
     return 0;
 }
