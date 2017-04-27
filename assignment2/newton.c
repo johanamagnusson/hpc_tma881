@@ -60,7 +60,7 @@ parse_opt(int key, char *arg,
 
 struct newton{
     int iterations;
-    int root; //might be represented as the complex root:W
+    int root;
 };
 
 static double complex complex_representation(int i, int l){
@@ -82,7 +82,21 @@ static struct newton newtons_method(double complex x_0, int d){
         iteration++;
         //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
     }
-    struct newton a = {iteration, 1};
+    
+    double from_double_to_int_hash_accuracy = 40.;
+    int root;
+    if(cabs(cpow(x_i, n) - 1.) <= limit){
+        root = (int) from_double_to_int_hash_accuracy * (carg(x_i)+3.141593);
+    }else{
+        root = 0;
+    }
+    if(cabs(cpow(x_0, n) - 1.) <= limit){
+        iteration = 0;
+    }
+        
+    //printf("root:  %d\n",  root);
+    //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
+    struct newton a = {iteration, root};
     return a;
 }
 
