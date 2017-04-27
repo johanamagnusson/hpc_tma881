@@ -3,6 +3,11 @@
 #include <argp.h>
 #include <complex.h>
 #include <math.h>
+#include <pthread.h>
+
+
+int counter = 0;
+int *a;
 
 struct arguments
 {
@@ -86,6 +91,18 @@ static struct newton newtons_method(double complex x_0, int d){
     return a;
 }
 
+pthread_mutex_t stopIt;
+
+void *Count(void *c)
+{
+    pthread_mutex_lock( &stopIt );
+    a[counter] = counter;
+    counter = counter + 1;
+    printf("Counter: %d\n", counter);
+    pthread_mutex_unlock( &stopIt );
+
+    pthread_exit(NULL);
+}
 
 
 struct argp_option options[] =
@@ -110,6 +127,29 @@ int main(int argc, char **argv)
     int i;
 
     printf("t = %d, l = %d, d = %d\n", tvalue, lvalue, dvalue);
+    
+    double complex z = -3.0 + 1.0 * I;
+    struct newton n = newtons_method(z, dvalue);
+    printf("iterations = %d\n", n.iterations);
+
+    a = (int *) malloc(2*sizeof(int));
+
+    int NUM_THREADS = 2;
+
+    pthread_t threads[NUM_THREADS];
+    int val;
+    for(long t=0; t<NUM_THREADS; t++){
+        val = pthread_create(&threads[t], NULL, Count, (void *)t);
+
+    }
+    
+
+    for(int i = 0; i<NUM_THREADS; i++){
+        pthread_join(threads[i], NULL);
+    }
+
+    printf("Here is the array\n %d\n", a[0]);
+    printf("%d\n", a[1]);
 
     char fname[PATH_MAX];
     snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", dvalue);
