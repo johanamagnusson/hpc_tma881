@@ -219,7 +219,8 @@ int main(int argc, char **argv)
     }    
 
     fclose(fcon);
-
+    
+    free(convergence);
     
     return 0;
 }
