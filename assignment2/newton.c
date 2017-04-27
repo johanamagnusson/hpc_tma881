@@ -47,7 +47,7 @@ parse_opt(int key, char *arg,
 
 struct newton{
     int iterations;
-    int root; //might be represented as the complex root:W
+    int root;
 };
 
 static double complex complex_representation(int i, int l){
@@ -62,14 +62,27 @@ static struct newton newtons_method(double complex x_0, int d){
     double toBig = 10000000000;
     double n = (double) d;
     double complex x_i = x_0 - ((cpow(x_0, n) - 1.0) / (n * cpow(x_0, n - 1.0)));
-    printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
-    //first condition probably wrong, how do we know the root? (without computing it?).
-    while( (cabs(cpow(x_i, n) - 1.0)  > limit) && (cabs(x_i - x_0) > limit) && (creal(x_i) < toBig) && (cimag(x_i) < toBig) && iteration < 20 ){
+    //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
+    while( (cabs(cpow(x_i, n) - 1.0)  > limit) && (cabs(x_i - x_0) > limit) && (creal(x_i) < toBig) && (cimag(x_i) < toBig) ){
         x_i = x_i - ((cpow(x_i, n) - 1.0) / (n * cpow(x_i, n - 1.0)));
         iteration++;
-        printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
+        //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
     }
-    struct newton a = {iteration, 1};
+    
+    double from_double_to_int_hash_accuracy = 40.;
+    int root;
+    if(cabs(cpow(x_i, n) - 1.) <= limit){
+        root = (int) from_double_to_int_hash_accuracy * (carg(x_i)+3.141593);
+    }else{
+        root = 0;
+    }
+    if(cabs(cpow(x_0, n) - 1.) <= limit){
+        iteration = 0;
+    }
+        
+    //printf("root:  %d\n",  root);
+    //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
+    struct newton a = {iteration, root};
     return a;
 }
 
@@ -97,11 +110,6 @@ int main(int argc, char **argv)
     int i;
 
     printf("t = %d, l = %d, d = %d\n", tvalue, lvalue, dvalue);
-    
-    double complex z = -3.0 + 1.0 * I;
-    struct newton n = newtons_method(z, dvalue);
-    printf("iterations = %d\n", n.iterations);
-
 
     char fname[PATH_MAX];
     snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", dvalue);
