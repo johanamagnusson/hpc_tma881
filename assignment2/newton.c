@@ -7,7 +7,15 @@
 
 
 int counter = 0;
-int *a;
+//int *a;
+
+int l;
+int t;
+int d;
+int end;
+
+int *attraction;
+int *convergence;
 
 struct arguments
 {
@@ -62,14 +70,14 @@ static double complex complex_representation(int i, int l){
 }
 
 static struct newton newtons_method(double complex x_0, int d){
-    int iteration = 1;
+    int iteration = 0;
     double limit = 0.001;
     double toBig = 10000000000;
     double n = (double) d;
     double complex x_i = x_0 - ((cpow(x_0, n) - 1.0) / (n * cpow(x_0, n - 1.0)));
     //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
     //first condition probably wrong, how do we know the root? (without computing it?).
-    while( (cabs(cpow(x_i, n) - 1.0)  > limit) && (cabs(x_i - x_0) > limit) && (creal(x_i) < toBig) && (cimag(x_i) < toBig) && iteration < 20 ){
+    while( (cabs(cpow(x_i, n) - 1.0)  > limit) && (cabs(x_i - x_0) > limit) && (creal(x_i) < toBig) && (cimag(x_i) < toBig)){
         x_i = x_i - ((cpow(x_i, n) - 1.0) / (n * cpow(x_i, n - 1.0)));
         iteration++;
         //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
@@ -82,12 +90,21 @@ pthread_mutex_t stopIt;
 
 void *Count(void *c)
 {
-    pthread_mutex_lock( &stopIt );
-    a[counter] = counter;
-    counter = counter + 1;
-    printf("Counter: %d\n", counter);
-    pthread_mutex_unlock( &stopIt );
+    int current_Pix = 0;
+    while(current_Pix < end){
+        pthread_mutex_lock( &stopIt );
+        
+        //a[counter] = counter;
+        current_Pix = counter;
+        counter = counter + 1;
+        //printf("Counter: %d\n", counter);
+        pthread_mutex_unlock( &stopIt );
 
+        complex x_0 = complex_representation(current_Pix,l);
+        struct newton a = newtons_method(x_0, d);
+        int iterations = a.iterations;
+        convergence[current_Pix] = iterations;
+    }
     pthread_exit(NULL);
 }
 
@@ -108,25 +125,28 @@ int main(int argc, char **argv)
 
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
 
-    int tvalue = arguments.t;
-    int lvalue = arguments.l;
-    int dvalue = arguments.d;
-    int i;
+    t = arguments.t;
+    l = arguments.l;
+    d = arguments.d;
+    end = l*l;
 
-    printf("t = %d, l = %d, d = %d\n", tvalue, lvalue, dvalue);
+    printf("t = %d, l = %d, d = %d\n", t, l, d);
     
-    double complex z = -3.0 + 1.0 * I;
-    struct newton n = newtons_method(z, dvalue);
-    printf("iterations = %d\n", n.iterations);
+    //double complex z = -3.0 + 1.0 * I;
+    //struct newton n = newtons_method(z, d);
+    //printf("iterations = %d\n", n.iterations);
 
-    a = (int *) malloc(2*sizeof(int));
+    //a = (int *) malloc(2*sizeof(int));
+    convergence = (int *) malloc(l*l*sizeof(int));
+    
+    int NUM_THREADS = t;
 
-    int NUM_THREADS = 2;
+    pthread_mutex_init(&stopIt, NULL);
 
     pthread_t threads[NUM_THREADS];
     int val;
-    for(long t=0; t<NUM_THREADS; t++){
-        val = pthread_create(&threads[t], NULL, Count, (void *)t);
+    for(long r=0; r<NUM_THREADS; r++){
+        val = pthread_create(&threads[r], NULL, Count, (void *)r);
 
     }
     
@@ -135,18 +155,55 @@ int main(int argc, char **argv)
         pthread_join(threads[i], NULL);
     }
 
-    printf("Here is the array\n %d\n", a[0]);
-    printf("%d\n", a[1]);
+    //printf("Here is the array\n%d\n", a[0]);
+    //printf("%d\n", a[1]);
+
+    int max=0;
+    for(int i = 0; i < l*l; i++){
+        if(max < convergence[i])
+            max = convergence[i];
+    }
+
+    int col = 255/max;
+
+
+    int colour[7][3];
+
+    for(int i = 0; i<7; i++){
+        for(int j = 0; j<3; j++){
+            colour[i][j] = 0;
+        }
+    }
+
+    for(int i = 0; i<3; i++){
+        colour[i][i] = 255;
+    }
+    colour[4][1] = 255;
+    colour[4][2] = 255;
+    colour[5][1] = 255;
+    colour[5][2] = 128;
+    colour[6][2] = 255; 
+    colour[6][3] = 255;
+    colour[7][1] = 204; 
+    colour[7][3] = 204;
 
     char fname[PATH_MAX];
-    snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", dvalue);
+    snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", d);
     FILE * fatt = fopen(fname, "w");
-    fprintf(fatt, "P3\n%d %d\n255\n", lvalue, lvalue);
+    fprintf(fatt, "P3\n%d %d\n255\n", l, l);
     fclose(fatt);
 
-    snprintf(fname, PATH_MAX, "newton_convergence_x%d.ppm", dvalue);
+    snprintf(fname, PATH_MAX, "newton_convergence_x%d.ppm", d);
     FILE * fcon = fopen(fname, "w");
-    fprintf(fcon, "P3\n%d %d\n255\n", lvalue, lvalue);
+    fprintf(fcon, "P3\n%d %d\n255\n", l, l);
+    
+    for(int i = 0; i < l*l; i++){
+        fprintf(fcon, "%d %d %d ", 255-convergence[i]*col, 255-convergence[i]*col, 255-convergence[i]*col);
+        if((i+1)%l == 0){
+            fprintf(fcon, "\n");
+        }
+    }    
+
     fclose(fcon);
 
     
