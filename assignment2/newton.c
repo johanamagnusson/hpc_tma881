@@ -94,11 +94,16 @@ static struct newton newtons_method(double complex x_0){
     //double from_double_to_int_hash_accuracy = 40.;
     int root;
     if(cabs(cpow(x_i, n) - 1.) <= limit){
-        root = root_as_int(x_i);//(int) from_double_to_int_hash_accuracy * (carg(x_i)+3.141593);
+        if(cabs(x_i - 1.) <= limit){
+            root = 1;
+        }else{
+            root = root_as_int(x_i);//(int) from_double_to_int_hash_accuracy * (carg(x_i)+3.141593);
+        }
     }else{
         root = 0;
     }
     if(cabs(cpow(x_0, n) - 1.) <= limit){
+        //printf("hallå %d\n", 1); 
         iteration = 0;
     }
         
@@ -192,6 +197,7 @@ int main(int argc, char **argv)
     for(int i = 0; i < l*l; i++){
         if(max < convergence[i])
             max = convergence[i];
+            //printf("hallå %d\n", max); 
     }
 
     int col;
@@ -227,7 +233,6 @@ int main(int argc, char **argv)
     snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", d);
     FILE * fatt = fopen(fname, "w");
     fprintf(fatt, "P3\n%d %d\n255\n", l, l);
-    
     for(int i = 0; i < l*l; i++){
         if (attraction[i] == 0) {
             fprintf(fatt, "%d %d %d ", 0, 0, 0);
