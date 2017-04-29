@@ -189,7 +189,6 @@ int main(int argc, char **argv)
     for(int i = 0; i<NUM_THREADS; i++){
         pthread_join(threads[i], NULL);
     }
-    /**
     //printf("Here is the array\n%d\n", a[0]);
     //printf("%d\n", a[1]);
     int max=0;
@@ -235,13 +234,13 @@ int main(int argc, char **argv)
         if (attraction[i] == 0) {
             fprintf(fatt, "%d %d %d ", 0, 0, 0);
         } else {
-            fprintf(fatt, "%d %d %d ", colour[attraction[i]][0],
-                                   colour[attraction[i]][1],
-                                   colour[attraction[i]][2]);
+            fprintf(fatt, "%d %d %d ", colour[attraction[i]-1][0],
+                                   colour[attraction[i]-1][1],
+                                   colour[attraction[i]-1][2]);
         }
-        if((i+1)%l == 0){
-            fprintf(fatt, "\n");
-        }
+        //if((i+1)%l == 0){
+        //    fprintf(fatt, "\n");
+        //}
     }
 
     fclose(fatt);
@@ -252,13 +251,14 @@ int main(int argc, char **argv)
     
     for(int i = 0; i < l*l; i++){
         fprintf(fcon, "%d %d %d ", 255-convergence[i]*col, 255-convergence[i]*col, 255-convergence[i]*col);
-        if((i+1)%l == 0){
-            fprintf(fcon, "\n");
-        }
+        //if((i+1)%l == 0){
+        //    fprintf(fcon, "\n");
+        //}
     }    
 
     fclose(fcon);
-    */
+   
+
     free(convergence);
     free(attraction);
 
