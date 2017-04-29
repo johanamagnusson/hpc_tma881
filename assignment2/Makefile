@@ -1,7 +1,7 @@
 OBJS = newton.o
 LIBS = -lm -lpthread
 CC = gcc
-CLFAGS = -O0
+CFLAGS = -O3
 .PHONY : all
 
 all : newton
