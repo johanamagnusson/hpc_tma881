@@ -17,6 +17,10 @@ int end;
 int *attraction;
 int *convergence;
 
+double n;
+double LIMIT = 0.001;
+double TOBIG = 10000000000;
+
 struct arguments
 {
     int t;
@@ -78,35 +82,30 @@ static int root_as_int(double complex root){
 }
 
 static struct newton newtons_method(double complex x_0){
-    int iteration = 0;
-    double limit = 0.001;
-    double toBig = 10000000000;
-    double n = (double) d;
-    double complex x_i = x_0 - ((cpow(x_0, n) - 1.0) / (n * cpow(x_0, n - 1.0)));
-    //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
-    //first condition probably wrong, how do we know the root? (without computing it?).
-    while( (cabs(cpow(x_i, n) - 1.0)  > limit) && (cabs(x_i - x_0) > limit) && (creal(x_i) < toBig) && (cimag(x_i) < toBig)){
-        x_i = x_i - ((cpow(x_i, n) - 1.0) / (n * cpow(x_i, n - 1.0)));
-        iteration++;
-        //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
-    }
-    
-    //double from_double_to_int_hash_accuracy = 40.;
     int root;
-    if(cabs(cpow(x_i, n) - 1.) <= limit){
-        if(cabs(x_i - 1.) <= limit){
-            root = 1;
-        }else{
-            root = root_as_int(x_i);//(int) from_double_to_int_hash_accuracy * (carg(x_i)+3.141593);
-        }
+    int iteration = 0;
+    if(cabs(cpow(x_0, n) - 1.) < LIMIT){
+        root = root_as_int(x_0);
     }else{
-        root = 0;
+        double complex x_i = x_0 - ((cpow(x_0, n) - 1.0) / (n * cpow(x_0, n - 1.0)));
+        while( (cabs(cpow(x_i, n) - 1.0)  > LIMIT) && (cabs(x_i - x_0) > LIMIT) && (creal(x_i) < TOBIG) && (cimag(x_i) < TOBIG)){
+            x_i = x_i - ((cpow(x_i, n) - 1.0) / (n * cpow(x_i, n - 1.0)));
+            iteration++;
+        }
+
+        if(cabs(cpow(x_i, n) - 1.) <= LIMIT){
+            if(cabs(x_i - 1.) <= LIMIT){
+                root = 1;
+            }else{
+                root = root_as_int(x_i);
+            }
+        }else{
+            root = 0;
+        }
+        if(cabs(cpow(x_0, n) - 1.) <= LIMIT){
+            iteration = 0;
+        }
     }
-    if(cabs(cpow(x_0, n) - 1.) <= limit){
-        //printf("hallå %d\n", 1); 
-        iteration = 0;
-    }
-        
     //printf("root:  %d\n",  root);
     //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
     struct newton a = {iteration, root};
@@ -165,6 +164,7 @@ int main(int argc, char **argv)
     d = arguments.d;
     end = l*l;
 
+    n = (double) d;
     printf("t = %d, l = %d, d = %d\n", t, l, d);
     
     //double complex z = -3.0 + 1.0 * I;
@@ -189,23 +189,21 @@ int main(int argc, char **argv)
     for(int i = 0; i<NUM_THREADS; i++){
         pthread_join(threads[i], NULL);
     }
-
+    /**
     //printf("Here is the array\n%d\n", a[0]);
     //printf("%d\n", a[1]);
-
     int max=0;
     for(int i = 0; i < l*l; i++){
         if(max < convergence[i])
             max = convergence[i];
             //printf("hallå %d\n", max); 
     }
-
     int col;
 
     if(d == 1){
         col = 0;
     }else{
-        col = 255/max;
+        col = 255/1;
     }
 
     int colour[7][3];
@@ -260,7 +258,7 @@ int main(int argc, char **argv)
     }    
 
     fclose(fcon);
-    
+    */
     free(convergence);
     free(attraction);
 
