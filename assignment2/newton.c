@@ -78,7 +78,8 @@ static int root_as_int(double complex root){
     if(arg < 0){
         arg += 2*M_PI;
     }
-    return (int) (arg/(2*M_PI/d)) + 1.5; // add 1 to make root = 1.0 => nbr 1. add 0.5 to correctly round double to int
+    int ret = (int) ((arg/(2*M_PI/ (double) d)) + 1.5);
+    return ret; // add 1 to make root = 1.0 => nbr 1. add 0.5 to correctly round double to int
 }
 
 static struct newton newtons_method(double complex x_0){
@@ -101,9 +102,6 @@ static struct newton newtons_method(double complex x_0){
             }
         }else{
             root = 0;
-        }
-        if(cabs(cpow(x_0, n) - 1.) <= LIMIT){
-            iteration = 0;
         }
     }
     //printf("root:  %d\n",  root);
@@ -135,7 +133,6 @@ void *Count(void *c)
 
         convergence[current_Pix] = a.iterations;
         attraction[current_Pix] = a.root;
-        //printf("Root: %d\n", a.root);
         //printf("Iterations: %d \n", a.iterations);
     }
     //printf("Yes we can!\n");
@@ -242,8 +239,21 @@ int main(int argc, char **argv)
         //    fprintf(fatt, "\n");
         //}
     }
-
     fclose(fatt);
+
+    //snprintf(fname, PATH_MAX, "newton_attractors_x%d.txt", d);
+    //FILE * ftxt = fopen(fname, "w");
+    //for(int i = 0; i < l*l; i++){
+    //    if (attraction[i] == 0) {
+    //        fprintf(ftxt, "%d ", 0);
+    //    } else {
+    //        fprintf(ftxt, "%d ", attraction[i]);
+    //    }
+    //    if((i+1)%l == 0){
+    //        fprintf(ftxt, "\n");
+    //    }
+    //}
+    //fclose(ftxt);
 
     snprintf(fname, PATH_MAX, "newton_convergence_x%d.ppm", d);
     FILE * fcon = fopen(fname, "w");
