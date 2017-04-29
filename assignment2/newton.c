@@ -63,13 +63,21 @@ struct newton{
     int root;
 };
 
-static double complex complex_representation(int i, int l){
+static double complex complex_representation(int i){
    double real_diff = (4./(double)(l-1))*(i%l);
    double imag_diff = (4./(double)(l-1))*(i/l);
    return (-2. + real_diff) + (2. - imag_diff)*I;
 }
 
-static struct newton newtons_method(double complex x_0, int d){
+static int root_as_int(double complex root){
+    double arg = carg(root);
+    if(arg < 0){
+        arg += 2*M_PI;
+    }
+    return (int) (arg/(2*M_PI/d)) + 1.5; // add 1 to make root = 1.0 => nbr 1. add 0.5 to correctly round double to int
+}
+
+static struct newton newtons_method(double complex x_0){
     int iteration = 0;
     double limit = 0.001;
     double toBig = 10000000000;
@@ -83,10 +91,10 @@ static struct newton newtons_method(double complex x_0, int d){
         //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
     }
     
-    double from_double_to_int_hash_accuracy = 40.;
+    //double from_double_to_int_hash_accuracy = 40.;
     int root;
     if(cabs(cpow(x_i, n) - 1.) <= limit){
-        root = (int) from_double_to_int_hash_accuracy * (carg(x_i)+3.141593);
+        root = root_as_int(x_i);//(int) from_double_to_int_hash_accuracy * (carg(x_i)+3.141593);
     }else{
         root = 0;
     }
@@ -114,8 +122,8 @@ void *Count(void *c)
         //printf("Counter: %d\n", counter);
         pthread_mutex_unlock( &stopIt );
 
-        complex x_0 = complex_representation(current_Pix,l);
-        struct newton a = newtons_method(x_0, d);
+        complex x_0 = complex_representation(current_Pix);
+        struct newton a = newtons_method(x_0);
 
         convergence[current_Pix] = a.iterations;
         attraction[current_Pix] = a.root;
@@ -165,7 +173,6 @@ int main(int argc, char **argv)
         val = pthread_create(&threads[r], NULL, Count, (void *)r);
 
     }
-    
 
     for(int i = 0; i<NUM_THREADS; i++){
         pthread_join(threads[i], NULL);
