@@ -116,8 +116,9 @@ void *Count(void *c)
 
         complex x_0 = complex_representation(current_Pix,l);
         struct newton a = newtons_method(x_0, d);
-        int iterations = a.iterations;
-        convergence[current_Pix] = iterations;
+
+        convergence[current_Pix] = a.iterations;
+        attraction[current_Pix] = a.root;
     }
     pthread_exit(NULL);
 }
@@ -152,6 +153,7 @@ int main(int argc, char **argv)
 
     //a = (int *) malloc(2*sizeof(int));
     convergence = (int *) malloc(l*l*sizeof(int));
+    attraction = (int *) malloc(l*l*sizeof(int));
     
     int NUM_THREADS = t;
 
@@ -192,6 +194,7 @@ int main(int argc, char **argv)
     for(int i = 0; i<3; i++){
         colour[i][i] = 255;
     }
+
     colour[4][1] = 255;
     colour[4][2] = 255;
     colour[5][1] = 255;
@@ -221,6 +224,7 @@ int main(int argc, char **argv)
     fclose(fcon);
     
     free(convergence);
+    free(attraction);
     
     return 0;
 }
