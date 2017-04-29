@@ -211,21 +211,21 @@ int main(int argc, char **argv)
     colour[6][0] = 204; 
     colour[6][2] = 204;
 
-    int colourPairing[d][2];
-    int k = 0;
-    for (int i = 0; i < l*l; i++) {
-        attraction[i]
-    }
-
     char fname[PATH_MAX];
     snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", d);
     FILE * fatt = fopen(fname, "w");
     fprintf(fatt, "P3\n%d %d\n255\n", l, l);
     
     for(int i = 0; i < l*l; i++){
-
+        if (attraction[i] == 0) {
+            fprintf(fatt, "%d %d %d ", 0, 0, 0);
+        } else {
+            fprintf(fatt, "%d %d %d ", colour[attraction[i]][0],
+                                   colour[attraction[i]][1],
+                                   colour[attraction[i]][2]);
+        }
         if((i+1)%l == 0){
-            fprintf(fcon, "\n");
+            fprintf(fatt, "\n");
         }
     }
 
