@@ -113,7 +113,7 @@ pthread_mutex_t stopIt;
 void *Count(void *c)
 {
     int current_Pix = 0;
-    while(current_Pix < end){
+    while(1){
         pthread_mutex_lock( &stopIt );
         
         //a[counter] = counter;
@@ -122,12 +122,19 @@ void *Count(void *c)
         //printf("Counter: %d\n", counter);
         pthread_mutex_unlock( &stopIt );
 
+        if(current_Pix >= end){
+            //printf("Can we break?\n");
+            break;
+        }
         complex x_0 = complex_representation(current_Pix);
         struct newton a = newtons_method(x_0);
 
         convergence[current_Pix] = a.iterations;
         attraction[current_Pix] = a.root;
+        //printf("Root: %d\n", a.root);
+        //printf("Iterations: %d \n", a.iterations);
     }
+    //printf("Yes we can!\n");
     pthread_exit(NULL);
 }
 
@@ -172,7 +179,7 @@ int main(int argc, char **argv)
     for(long r=0; r<NUM_THREADS; r++){
         val = pthread_create(&threads[r], NULL, Count, (void *)r);
 
-    }
+    }   
 
     for(int i = 0; i<NUM_THREADS; i++){
         pthread_join(threads[i], NULL);
@@ -187,8 +194,13 @@ int main(int argc, char **argv)
             max = convergence[i];
     }
 
-    int col = 255/max;
+    int col;
 
+    if(d == 1){
+        col = 0;
+    }else{
+        col = 255/max;
+    }
 
     int colour[7][3];
 
