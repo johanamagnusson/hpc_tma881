@@ -204,6 +204,12 @@ int main(int argc, char **argv)
     colour[7][1] = 204; 
     colour[7][3] = 204;
 
+    int colourPairing[d][2];
+    int k = 0;
+    for (int i = 0; i < l*l; i++) {
+        attraction[i]
+    }
+
     char fname[PATH_MAX];
     snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", d);
     FILE * fatt = fopen(fname, "w");
