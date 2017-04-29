@@ -12,4 +12,4 @@ newton : $(OBJS)
 newton.o : newton.c
 
 clean :
-	rm -f newton newton.o
+	rm -f newton newton.o *.ppm

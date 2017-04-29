@@ -162,7 +162,7 @@ int main(int argc, char **argv)
     //a = (int *) malloc(2*sizeof(int));
     convergence = (int *) malloc(l*l*sizeof(int));
     attraction = (int *) malloc(l*l*sizeof(int));
-    
+
     int NUM_THREADS = t;
 
     pthread_mutex_init(&stopIt, NULL);
@@ -202,19 +202,33 @@ int main(int argc, char **argv)
         colour[i][i] = 255;
     }
 
-    colour[4][1] = 255;
-    colour[4][2] = 255;
-    colour[5][1] = 255;
-    colour[5][2] = 128;
-    colour[6][2] = 255; 
-    colour[6][3] = 255;
-    colour[7][1] = 204; 
-    colour[7][3] = 204;
+    colour[3][0] = 255;
+    colour[3][1] = 255;
+    colour[4][0] = 255;
+    colour[4][1] = 128;
+    colour[5][1] = 255; 
+    colour[5][2] = 255;
+    colour[6][0] = 204; 
+    colour[6][2] = 204;
+
+    int colourPairing[d][2];
+    int k = 0;
+    for (int i = 0; i < l*l; i++) {
+        attraction[i]
+    }
 
     char fname[PATH_MAX];
     snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", d);
     FILE * fatt = fopen(fname, "w");
     fprintf(fatt, "P3\n%d %d\n255\n", l, l);
+    
+    for(int i = 0; i < l*l; i++){
+
+        if((i+1)%l == 0){
+            fprintf(fcon, "\n");
+        }
+    }
+
     fclose(fatt);
 
     snprintf(fname, PATH_MAX, "newton_convergence_x%d.ppm", d);
@@ -232,6 +246,6 @@ int main(int argc, char **argv)
     
     free(convergence);
     free(attraction);
-    
+
     return 0;
 }
