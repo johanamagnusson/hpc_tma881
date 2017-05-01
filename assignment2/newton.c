@@ -194,13 +194,7 @@ int main(int argc, char **argv)
             max = convergence[i];
             //printf("hallå %d\n", max); 
     }
-    int col;
-
-    if(d == 1){
-        col = 0;
-    }else{
-        col = 255/1;
-    }
+    int col = (int) (255. / (double) max + 0.5);
 
     int colour[7][3];
 
@@ -260,7 +254,9 @@ int main(int argc, char **argv)
     fprintf(fcon, "P3\n%d %d\n255\n", l, l);
     
     for(int i = 0; i < l*l; i++){
-        fprintf(fcon, "%d %d %d ", 255-convergence[i]*col, 255-convergence[i]*col, 255-convergence[i]*col);
+        fprintf(fcon, "%d %d %d ", (255-convergence[i])*col,
+                                   (255-convergence[i])*col,
+                                   (255-convergence[i])*col);
         //if((i+1)%l == 0){
         //    fprintf(fcon, "\n");
         //}
