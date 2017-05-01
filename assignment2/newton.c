@@ -13,6 +13,7 @@ int l;
 int t;
 int d;
 int end;
+double complex *roots;
 
 int *attraction;
 int *convergence;
@@ -82,6 +83,7 @@ static int root_as_int(double complex root){
     return ret; // add 1 to make root = 1.0 => nbr 1. add 0.5 to correctly round double to int
 }
 
+/**
 static struct newton newtons_method(double complex x_0){
     int root;
     int iteration = 0;
@@ -109,6 +111,35 @@ static struct newton newtons_method(double complex x_0){
     struct newton a = {iteration, root};
     return a;
 }
+**/
+
+static struct newton newtons_method(double complex x_0) {
+    int root;
+    int iterations = 0;
+    int running = 1;
+    
+    double complex x_i = x_0;// - ((cpow(x_0, n) - 1.0) / (n * cpow(x_0, n - 1.0)));
+    while(running) {
+        if(cabs(x_i) < LIMIT || creal(x_i) > TOBIG || cimag(x_i) > TOBIG) {
+            root = d;
+            running = 0;
+            break;
+        } else {
+            for (int i = 0; i < d; i++) {
+                if(cabs(roots[i] - x_i) < LIMIT) {
+                    root = i;
+                    running = 0;
+                    break;
+                }
+            }
+        }
+        x_i = x_i - ((cpow(x_i, n) - 1.0) / (n * cpow(x_i, n - 1.0)));
+        iterations++;
+    }
+    struct newton ret = {iterations, root};
+    //printf("%d\n", root);
+    return ret;
+}
 
 pthread_mutex_t stopIt;
 
@@ -120,7 +151,7 @@ void *Count(void *c)
         
         //a[counter] = counter;
         current_Pix = counter;
-        counter = counter + 1;
+        counter = counter + l;
         //printf("Counter: %d\n", counter);
         pthread_mutex_unlock( &stopIt );
 
@@ -128,11 +159,13 @@ void *Count(void *c)
             //printf("Can we break?\n");
             break;
         }
-        complex x_0 = complex_representation(current_Pix);
-        struct newton a = newtons_method(x_0);
+        for (int i = current_Pix; i < current_Pix + l; i++) {
+            complex x_0 = complex_representation(i);
+            struct newton a = newtons_method(x_0);
 
-        convergence[current_Pix] = a.iterations;
-        attraction[current_Pix] = a.root;
+            convergence[i] = a.iterations;
+            attraction[i] = a.root;
+        }
         //printf("Iterations: %d \n", a.iterations);
     }
     //printf("Yes we can!\n");
@@ -162,6 +195,16 @@ int main(int argc, char **argv)
     end = l*l;
 
     n = (double) d;
+
+    roots = (double complex *) malloc(d*sizeof(double complex));
+
+    for (int i = 0; i < d; i++) {
+        double arg = (2 * M_PI / n) * i;
+        roots[i] = cexp(arg * I);
+        //printf("%.8f\n", arg);
+        //printf("%f + i%f\n", creal(roots[i]), cimag(roots[i]));
+    }
+
     printf("t = %d, l = %d, d = %d\n", t, l, d);
     
     //double complex z = -3.0 + 1.0 * I;
@@ -222,12 +265,12 @@ int main(int argc, char **argv)
     FILE * fatt = fopen(fname, "w");
     fprintf(fatt, "P3\n%d %d\n255\n", l, l);
     for(int i = 0; i < l*l; i++){
-        if (attraction[i] == 0) {
+        if (attraction[i] == d) {
             fprintf(fatt, "%d %d %d ", 0, 0, 0);
         } else {
-            fprintf(fatt, "%d %d %d ", colour[attraction[i]-1][0],
-                                   colour[attraction[i]-1][1],
-                                   colour[attraction[i]-1][2]);
+            fprintf(fatt, "%d %d %d ", colour[attraction[i]][0],
+                                   colour[attraction[i]][1],
+                                   colour[attraction[i]][2]);
         }
         //if((i+1)%l == 0){
         //    fprintf(fatt, "\n");
@@ -235,19 +278,21 @@ int main(int argc, char **argv)
     }
     fclose(fatt);
 
-    //snprintf(fname, PATH_MAX, "newton_attractors_x%d.txt", d);
-    //FILE * ftxt = fopen(fname, "w");
-    //for(int i = 0; i < l*l; i++){
-    //    if (attraction[i] == 0) {
-    //        fprintf(ftxt, "%d ", 0);
-    //    } else {
-    //        fprintf(ftxt, "%d ", attraction[i]);
-    //    }
-    //    if((i+1)%l == 0){
-    //        fprintf(ftxt, "\n");
-    //    }
-    //}
-    //fclose(ftxt);
+    /*
+    snprintf(fname, PATH_MAX, "newton_attractors_x%d.txt", d);
+    FILE * ftxt = fopen(fname, "w");
+    for(int i = 0; i < l*l; i++){
+        if (attraction[i] == d) {
+            fprintf(ftxt, "%d ", 0);
+        } else {
+            fprintf(ftxt, "%d ", attraction[i]);
+        }
+        if((i+1)%l == 0){
+            fprintf(ftxt, "\n");
+        }
+    }
+    fclose(ftxt);
+    */
 
     snprintf(fname, PATH_MAX, "newton_convergence_x%d.ppm", d);
     FILE * fcon = fopen(fname, "w");
@@ -263,7 +308,6 @@ int main(int argc, char **argv)
     }    
 
     fclose(fcon);
-   
 
     free(convergence);
     free(attraction);
