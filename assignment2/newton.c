@@ -129,6 +129,35 @@ static struct newton newtons_method(double complex x_0) {
 
 pthread_mutex_t stopIt;
 
+//pthread_mutex_t write1;
+
+//pthread_mutex_t write2;
+
+//void start_Thread(){
+//    int writer;
+//    pthread_t k;
+//    writer = pthread_create(&k, NULL, Write, (void *)1);
+//}
+
+//void *Write(void *w)
+//{
+//    while(1){
+
+//        pthread_mutex_lock( &write1 );
+//        printf("Write from first memory pool %d\n", counter);
+//        pthread_mutex_unlock( &write1 );
+
+//        pthread_mutex_lock( &write2 );
+//        printf("Write from second memory pool %d\n", counter);
+//        pthread_mutex_unlock( &write2);
+
+//        if(counter >= end){
+//            break;
+//        }
+
+//   }
+//}
+
 void *Count(void *c)
 {
     int current_Pix = 0;
@@ -204,7 +233,7 @@ int main(int argc, char **argv)
     int NUM_THREADS = t;
 
     pthread_mutex_init(&stopIt, NULL);
-
+    
     pthread_t threads[NUM_THREADS];
     int val;
     for(long r=0; r<NUM_THREADS; r++){
