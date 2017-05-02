@@ -104,7 +104,7 @@ static struct newton newtons_method(double complex x_0) {
     double factor1 = 1.-factor2;
     int d_prim = d-1;
         
-    double complex x_i = x_0;// - ((cpow(x_0, n) - 1.0) / (n * cpow(x_0, n - 1.0)));
+    double complex x_i = x_0;
     while(running) {
         if(cabs(x_i) < LIMIT || creal(x_i) > TOBIG || cimag(x_i) > TOBIG) {
             root = d;
@@ -115,6 +115,7 @@ static struct newton newtons_method(double complex x_0) {
                 if(cabs(roots[i] - x_i) < LIMIT) {
                     root = i;
                     running = 0;
+                    iterations--;
                     break;
                 }
             }
@@ -123,7 +124,7 @@ static struct newton newtons_method(double complex x_0) {
         iterations++;
     }
     struct newton ret = {iterations, root};
-    //printf("%d\n", root);
+    //printf("%d\n", iterations);
     return ret;
 }
 
@@ -223,7 +224,14 @@ int main(int argc, char **argv)
             max = convergence[i];
             //printf("hallå %d\n", max); 
     }
-    int col = (int) (255. / (double) max + 0.5);
+    int col;
+    if (max > 255) {
+        col = 1;
+    } else {
+        col = (int) (255 / max);
+    }
+
+    printf("%d, %d\n", col, max);
 
     int colour[7][3];
 
@@ -246,6 +254,16 @@ int main(int argc, char **argv)
     colour[6][0] = 204; 
     colour[6][2] = 204;
 
+    char *colorStrings[7];
+    colorStrings[0] = "255 0 0 ";
+    colorStrings[1] = "0 255 0 ";
+    colorStrings[2] = "0 0 255 ";
+    colorStrings[3] = "255 255 0 ";
+    colorStrings[4] = "255 128 0 ";
+    colorStrings[5] = "0 255 255 ";
+    colorStrings[6] = "204 0 204 ";
+
+    
     char fname[PATH_MAX];
     snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", d);
     FILE * fatt = fopen(fname, "w");
@@ -254,16 +272,15 @@ int main(int argc, char **argv)
         if (attraction[i] == d) {
             fprintf(fatt, "%d %d %d ", 0, 0, 0);
         } else {
-            fprintf(fatt, "%d %d %d ", colour[attraction[i]][0],
-                                   colour[attraction[i]][1],
-                                   colour[attraction[i]][2]);
+            fprintf(fatt, "%s", colorStrings[attraction[i]]);
+            //fprintf(fatt, "%d %d %d ",
+             //       colour[attraction[i]][0],
+               //     colour[attraction[i]][1],
+                 //   colour[attraction[i]][2]);
         }
-        //if((i+1)%l == 0){
-        //    fprintf(fatt, "\n");
-        //}
     }
     fclose(fatt);
-
+    
     /*
     snprintf(fname, PATH_MAX, "newton_attractors_x%d.txt", d);
     FILE * ftxt = fopen(fname, "w");
@@ -279,24 +296,43 @@ int main(int argc, char **argv)
     }
     fclose(ftxt);
     */
+   
+    int num;
+    char **convergenceStrings = (char **) malloc((max+1) * sizeof(char *));
+    for (int i = 0; i <= max; i++) {
+        convergenceStrings[i] = (char *) malloc(20 * sizeof(char));
+        if (i > 255) {
+            num = 0;
+        } else {
+            num = 255 - i*col;
+        }
+        snprintf(convergenceStrings[i], 20 * sizeof(char), "%d %d %d ",
+                num,
+                num,
+                num);
+    }
 
     snprintf(fname, PATH_MAX, "newton_convergence_x%d.ppm", d);
     FILE * fcon = fopen(fname, "w");
     fprintf(fcon, "P3\n%d %d\n255\n", l, l);
     
     for(int i = 0; i < l*l; i++){
-        fprintf(fcon, "%d %d %d ", (255-convergence[i])*col,
-                                   (255-convergence[i])*col,
-                                   (255-convergence[i])*col);
-        //if((i+1)%l == 0){
-        //    fprintf(fcon, "\n");
-        //}
+        fprintf(fcon, "%s", convergenceStrings[convergence[i]]);
+       // fprintf(fcon, "%d %d %d ", 255-convergence[i]*col,
+       //                            255-convergence[i]*col,
+       //                            255-convergence[i]*col);
     }    
 
     fclose(fcon);
+    
 
     free(convergence);
     free(attraction);
+    free(roots);
+    //free(colorStrings);
+    for (int i = 0; i < max; i++) {
+        free(convergenceStrings[i]);
+    }
 
     return 0;
 }
