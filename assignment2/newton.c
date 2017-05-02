@@ -19,8 +19,9 @@ int *attraction;
 int *convergence;
 
 double n;
-double LIMIT = 0.001;
-double TOBIG = 10000000000;
+double LIMIT   = 0.001;
+double LIMITSQ = 0.000001;
+double TOBIG   = 10000000000;
 
 struct arguments
 {
@@ -95,6 +96,13 @@ double complex ipow(complex double base, int exp)
     return result;
 }
 
+double iabs(complex double x) {
+    double real = creal(x);
+    double imag = cimag(x);
+    double ret = real*real + imag*imag;
+    return ret;
+}
+
 
 static struct newton newtons_method(double complex x_0) {
     int root;
@@ -106,13 +114,13 @@ static struct newton newtons_method(double complex x_0) {
         
     double complex x_i = x_0;
     while(running) {
-        if(cabs(x_i) < LIMIT || creal(x_i) > TOBIG || cimag(x_i) > TOBIG) {
+        if(iabs(x_i) < LIMITSQ || creal(x_i) > TOBIG || cimag(x_i) > TOBIG) {
             root = d;
             running = 0;
             break;
         } else {
             for (int i = 0; i < d; i++) {
-                if(cabs(roots[i] - x_i) < LIMIT) {
+                if(iabs(roots[i] - x_i) < LIMITSQ) {
                     root = i;
                     running = 0;
                     iterations--;
