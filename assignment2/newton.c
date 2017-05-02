@@ -189,6 +189,8 @@ int main(int argc, char **argv)
     for(int i = 0; i<NUM_THREADS; i++){
         pthread_join(threads[i], NULL);
     }
+
+    /**
     //printf("Here is the array\n%d\n", a[0]);
     //printf("%d\n", a[1]);
     int max=0;
@@ -257,8 +259,8 @@ int main(int argc, char **argv)
     }    
 
     fclose(fcon);
-   
-
+    */
+    
     free(convergence);
     free(attraction);
 
