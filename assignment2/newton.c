@@ -83,41 +83,27 @@ static int root_as_int(double complex root){
     return ret; // add 1 to make root = 1.0 => nbr 1. add 0.5 to correctly round double to int
 }
 
-/**
-static struct newton newtons_method(double complex x_0){
-    int root;
-    int iteration = 0;
-    if(cabs(cpow(x_0, n) - 1.) < LIMIT){
-        root = root_as_int(x_0);
-    }else{
-        double complex x_i = x_0 - ((cpow(x_0, n) - 1.0) / (n * cpow(x_0, n - 1.0)));
-        while( (cabs(cpow(x_i, n) - 1.0)  > LIMIT) && (cabs(x_i - x_0) > LIMIT) && (creal(x_i) < TOBIG) && (cimag(x_i) < TOBIG)){
-            x_i = x_i - ((cpow(x_i, n) - 1.0) / (n * cpow(x_i, n - 1.0)));
-            iteration++;
-        }
-
-        if(cabs(cpow(x_i, n) - 1.) <= LIMIT){
-            if(cabs(x_i - 1.) <= LIMIT){
-                root = 1;
-            }else{
-                root = root_as_int(x_i);
-            }
-        }else{
-            root = 0;
-        }
+double complex ipow(complex double base, int exp)
+{
+    double complex result = 1;
+    while (exp){
+        if (exp & 1)
+            result *= base;
+        exp >>= 1;
+        base *= base;
     }
-    //printf("root:  %d\n",  root);
-    //printf("test %d\n test2 %f + %fi\n ", iteration, creal(x_i), cimag(x_i));
-    struct newton a = {iteration, root};
-    return a;
+    return result;
 }
-**/
+
 
 static struct newton newtons_method(double complex x_0) {
     int root;
     int iterations = 0;
     int running = 1;
-    
+    double factor2 = 1./n;
+    double factor1 = 1.-factor2;
+    int d_prim = d-1;
+        
     double complex x_i = x_0;// - ((cpow(x_0, n) - 1.0) / (n * cpow(x_0, n - 1.0)));
     while(running) {
         if(cabs(x_i) < LIMIT || creal(x_i) > TOBIG || cimag(x_i) > TOBIG) {
@@ -133,7 +119,7 @@ static struct newton newtons_method(double complex x_0) {
                 }
             }
         }
-        x_i = x_i - ((cpow(x_i, n) - 1.0) / (n * cpow(x_i, n - 1.0)));
+        x_i = factor1*x_i + factor2*(1./ipow(x_i, d_prim));
         iterations++;
     }
     struct newton ret = {iterations, root};
