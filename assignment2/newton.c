@@ -5,7 +5,7 @@
 #include <math.h>
 #include <pthread.h>
 
-#define MEMORY_POOL_NR_OF_ROWS 60
+#define MEMORY_POOL_NR_OF_ROWS 80
 
 int counter = 0;
 //int *a;
@@ -15,10 +15,11 @@ int t;
 int d;
 int end;
 double complex *roots;
+int rowsWritten = 0;
+int thrshld = 30;
 
-int *attraction;
-int *convergence;
-int *memoryPool;
+int *memoryPoolAttraction;
+int *memoryPoolConvergence;
 
 double n;
 double LIMIT   = 0.001;
@@ -204,16 +205,63 @@ pthread_mutex_t stopIt;
 
 void *Write(void *w)
 {
+    int i;
     int writeRow = 0;
-    int rowsWritten = 0;
-    int thrshld = MEMORY_POOL_NR_OF_ROWS / 2;
+    int max = 255;
+    int col = 1;
+
+    char *colorStrings[7];
+    colorStrings[0] = "255 0 0 ";
+    colorStrings[1] = "0 255 0 ";
+    colorStrings[2] = "0 0 255 ";
+    colorStrings[3] = "255 255 0 ";
+    colorStrings[4] = "255 128 0 ";
+    colorStrings[5] = "0 255 255 ";
+    colorStrings[6] = "204 0 204 ";
+
+    char fname[PATH_MAX];
+    snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", d);
+    FILE * fatt = fopen(fname, "w");
+    fprintf(fatt, "P3\n%d %d\n255\n", l, l);
+
+    int num;
+    char **convergenceStrings = (char **) malloc((max+1) * sizeof(char *));
+    for (int i = 0; i <= max; i++) {
+        convergenceStrings[i] = (char *) malloc(20 * sizeof(char));
+        if (i > 255) {
+            num = 0;
+        } else {
+            num = 255 - i*col;
+        }
+        snprintf(convergenceStrings[i], 20 * sizeof(char), "%d %d %d ",
+                num,
+                num,
+                num);
+    }
+
+    snprintf(fname, PATH_MAX, "newton_convergence_x%d.ppm", d);
+    FILE * fcon = fopen(fname, "w");
+    fprintf(fcon, "P3\n%d %d\n255\n", l, l);
+
 
     while(rowsWritten < l) {
         if(rowsWritten + thrshld < counter || rowsWritten > l - thrshld) {
-            // Write to files from index writeRow in memoryPool
+            for(i = writeRow*l; i < writeRow*l + l; i++) {
+                if (memoryPoolAttraction[i] == d) {
+                    fprintf(fatt, "%d %d %d ", 0, 0, 0);
+                } else {
+                    fprintf(fatt, "%s", colorStrings[memoryPoolAttraction[i]]);
+                }
+                fprintf(fcon, "%s", convergenceStrings[memoryPoolConvergence[i]]);
+            }
             rowsWritten += 1;
             writeRow = (writeRow + 1) % MEMORY_POOL_NR_OF_ROWS;
         }
+    }
+    fclose(fatt);
+    fclose(fcon);
+    for (int i = 0; i < max; i++) {
+        free(convergenceStrings[i]);
     }
     pthread_exit(NULL);
 }
@@ -222,6 +270,8 @@ void *Write(void *w)
 void *Count(void *c)
 {
     int current_Pix = 0;
+    int saveRow;
+    int saveIndex;
     while(1){
         pthread_mutex_lock( &stopIt );
         
@@ -234,19 +284,22 @@ void *Count(void *c)
         if(current_Pix >= l){
             break;
         }
+
+        saveRow = current_Pix % MEMORY_POOL_NR_OF_ROWS;
+
         for (int i = current_Pix*l; i < current_Pix*l + l; i++) {
             complex x_0 = complex_representation(i);
             struct newton a;
-            //switch (d)
-            //{
-            //    case 2: a = newtons_method2(x_0); break;
-            //    default: a = newtons_method(x_0); break;
-            //}
 
             a = newtons_method(x_0);
 
-            convergence[i] = a.iterations;
-            attraction[i] = a.root;
+            saveIndex = i % l;
+
+            memoryPoolConvergence[saveRow*l + saveIndex] = a.iterations;
+            memoryPoolAttraction[saveRow*l + saveIndex] = a.root;
+
+            //convergence[i] = a.iterations;
+            //attraction[i] = a.root;
         }
         //printf("Iterations: %d \n", a.iterations);
     }
@@ -294,9 +347,8 @@ int main(int argc, char **argv)
     //printf("iterations = %d\n", n.iterations);
 
     //a = (int *) malloc(2*sizeof(int));
-    convergence = (int *) malloc(l*l*sizeof(int));
-    attraction = (int *) malloc(l*l*sizeof(int));
-    memoryPool = (int *) malloc(MEMORY_POOL_NR_OF_ROWS*l*sizeof(int));
+    memoryPoolAttraction = (int *) malloc(MEMORY_POOL_NR_OF_ROWS*l*sizeof(int));
+    memoryPoolConvergence = (int *) malloc(MEMORY_POOL_NR_OF_ROWS*l*sizeof(int));
 
     int NUM_THREADS = t;
 
@@ -316,68 +368,6 @@ int main(int argc, char **argv)
     }
     pthread_join(writeThread, NULL);
 
-    int max=0;
-    for(int i = 0; i < l*l; i++){
-        if(max < convergence[i])
-            max = convergence[i];
-            //printf("hallå %d\n", max); 
-    }
-    int col;
-    if (max > 255) {
-        col = 1;
-    } else {
-        col = (int) (255 / max);
-    }
-
-    printf("%d, %d\n", col, max);
-
-    int colour[7][3];
-
-    for(int i = 0; i<7; i++){
-        for(int j = 0; j<3; j++){
-            colour[i][j] = 0;
-        }
-    }
-
-    for(int i = 0; i<3; i++){
-        colour[i][i] = 255;
-    }
-
-    colour[3][0] = 255;
-    colour[3][1] = 255;
-    colour[4][0] = 255;
-    colour[4][1] = 128;
-    colour[5][1] = 255; 
-    colour[5][2] = 255;
-    colour[6][0] = 204; 
-    colour[6][2] = 204;
-
-    char *colorStrings[7];
-    colorStrings[0] = "255 0 0 ";
-    colorStrings[1] = "0 255 0 ";
-    colorStrings[2] = "0 0 255 ";
-    colorStrings[3] = "255 255 0 ";
-    colorStrings[4] = "255 128 0 ";
-    colorStrings[5] = "0 255 255 ";
-    colorStrings[6] = "204 0 204 ";
-
-    
-    char fname[PATH_MAX];
-    snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", d);
-    FILE * fatt = fopen(fname, "w");
-    fprintf(fatt, "P3\n%d %d\n255\n", l, l);
-    for(int i = 0; i < l*l; i++){
-        if (attraction[i] == d) {
-            fprintf(fatt, "%d %d %d ", 0, 0, 0);
-        } else {
-            fprintf(fatt, "%s", colorStrings[attraction[i]]);
-            //fprintf(fatt, "%d %d %d ",
-             //       colour[attraction[i]][0],
-               //     colour[attraction[i]][1],
-                 //   colour[attraction[i]][2]);
-        }
-    }
-    fclose(fatt);
     
     /*
     snprintf(fname, PATH_MAX, "newton_attractors_x%d.txt", d);
@@ -394,44 +384,14 @@ int main(int argc, char **argv)
     }
     fclose(ftxt);
     */
-   
-    int num;
-    char **convergenceStrings = (char **) malloc((max+1) * sizeof(char *));
-    for (int i = 0; i <= max; i++) {
-        convergenceStrings[i] = (char *) malloc(20 * sizeof(char));
-        if (i > 255) {
-            num = 0;
-        } else {
-            num = 255 - i*col;
-        }
-        snprintf(convergenceStrings[i], 20 * sizeof(char), "%d %d %d ",
-                num,
-                num,
-                num);
-    }
-
-    snprintf(fname, PATH_MAX, "newton_convergence_x%d.ppm", d);
-    FILE * fcon = fopen(fname, "w");
-    fprintf(fcon, "P3\n%d %d\n255\n", l, l);
-    
-    for(int i = 0; i < l*l; i++){
-        fprintf(fcon, "%s", convergenceStrings[convergence[i]]);
-       // fprintf(fcon, "%d %d %d ", 255-convergence[i]*col,
-       //                            255-convergence[i]*col,
-       //                            255-convergence[i]*col);
-    }    
-
-    fclose(fcon);
     
 
-    free(convergence);
-    free(attraction);
+    //free(convergence);
+    //free(attraction);
+    free(memoryPoolAttraction);
+    free(memoryPoolConvergence);
     free(roots);
-    free(memoryPool);
     //free(colorStrings);
-    for (int i = 0; i < max; i++) {
-        free(convergenceStrings[i]);
-    }
 
     return 0;
 }
