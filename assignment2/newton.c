@@ -118,6 +118,7 @@ static struct newton newtons_method(double complex x_0) {
     while(running) {
         if(iabs(x_i) < LIMITSQ || creal(x_i) > TOBIG || cimag(x_i) > TOBIG) {
             root = d;
+            iterations = 255;
             running = 0;
             break;
         } else {
@@ -209,6 +210,7 @@ void *Write(void *w)
     int writeRow = 0;
     int max = 255;
     int col = 1;
+    int localCounter;
 
     char *colorStrings[7];
     colorStrings[0] = "255 0 0 ";
@@ -226,7 +228,7 @@ void *Write(void *w)
 
     int num;
     char **convergenceStrings = (char **) malloc((max+1) * sizeof(char *));
-    for (int i = 0; i <= max; i++) {
+    for (i = 0; i <= max; i++) {
         convergenceStrings[i] = (char *) malloc(20 * sizeof(char));
         if (i > 255) {
             num = 0;
@@ -243,7 +245,6 @@ void *Write(void *w)
     FILE * fcon = fopen(fname, "w");
     fprintf(fcon, "P3\n%d %d\n255\n", l, l);
 
-
     while(rowsWritten < l) {
         if(rowsWritten + thrshld < counter || rowsWritten > l - thrshld) {
             for(i = writeRow*l; i < writeRow*l + l; i++) {
@@ -252,7 +253,11 @@ void *Write(void *w)
                 } else {
                     fprintf(fatt, "%s", colorStrings[memoryPoolAttraction[i]]);
                 }
-                fprintf(fcon, "%s", convergenceStrings[memoryPoolConvergence[i]]);
+                if (memoryPoolConvergence[i] > 255) {
+                    fprintf(fcon, "%s", convergenceStrings[max]);
+                } else {
+                    fprintf(fcon, "%s", convergenceStrings[memoryPoolConvergence[i]]);
+                }
             }
             rowsWritten += 1;
             writeRow = (writeRow + 1) % MEMORY_POOL_NR_OF_ROWS;
@@ -286,6 +291,7 @@ void *Count(void *c)
         }
 
         saveRow = current_Pix % MEMORY_POOL_NR_OF_ROWS;
+
 
         for (int i = current_Pix*l; i < current_Pix*l + l; i++) {
             complex x_0 = complex_representation(i);
