@@ -103,7 +103,6 @@ double iabs(complex double x) {
     return ret;
 }
 
-
 static struct newton newtons_method(double complex x_0) {
     int root;
     int iterations = 0;
@@ -129,6 +128,38 @@ static struct newton newtons_method(double complex x_0) {
             }
         }
         x_i = factor1*x_i + factor2*(1./ipow(x_i, d_prim));
+        iterations++;
+    }
+    struct newton ret = {iterations, root};
+    //printf("%d\n", iterations);
+    return ret;
+}
+
+static struct newton newtons_method2(double complex x_0) {
+    int root;
+    int iterations = 0;
+    int running = 1;
+    double factor2 = 0.5;
+    double factor1 = 0.5;
+    int d_prim = 1;
+        
+    double complex x_i = x_0;
+    while(running) {
+        if(iabs(x_i) < LIMITSQ || creal(x_i) > TOBIG || cimag(x_i) > TOBIG) {
+            root = d;
+            running = 0;
+            break;
+        } else {
+            for (int i = 0; i < d; i++) {
+                if(iabs(roots[i] - x_i) < LIMITSQ) {
+                    root = i;
+                    running = 0;
+                    iterations--;
+                    break;
+                }
+            }
+        }
+        x_i = factor1*x_i + factor2*1./x_i;
         iterations++;
     }
     struct newton ret = {iterations, root};
@@ -185,7 +216,12 @@ void *Count(void *c)
         }
         for (int i = current_Pix; i < current_Pix + l; i++) {
             complex x_0 = complex_representation(i);
-            struct newton a = newtons_method(x_0);
+            struct newton a;
+            switch (d)
+            {
+                case 2: a = newtons_method2(x_0); break;
+                default: a = newtons_method(x_0); break;
+            }
 
             convergence[i] = a.iterations;
             attraction[i] = a.root;
