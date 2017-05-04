@@ -5,6 +5,7 @@
 #include <math.h>
 #include <pthread.h>
 
+#define MEMORY_POOL_NR_OF_ROWS 60
 
 int counter = 0;
 //int *a;
@@ -17,6 +18,7 @@ double complex *roots;
 
 int *attraction;
 int *convergence;
+int *memoryPool;
 
 double n;
 double LIMIT   = 0.001;
@@ -198,6 +200,25 @@ pthread_mutex_t stopIt;
 //   }
 //}
 
+
+
+void *Write(void *w)
+{
+    int writeRow = 0;
+    int rowsWritten = 0;
+    int thrshld = MEMORY_POOL_NR_OF_ROWS / 2;
+
+    while(rowsWritten < l) {
+        if(rowsWritten + thrshld < counter || rowsWritten > l - thrshld) {
+            // Write to files from index writeRow in memoryPool
+            rowsWritten += 1;
+            writeRow = (writeRow + 1) % MEMORY_POOL_NR_OF_ROWS;
+        }
+    }
+    pthread_exit(NULL);
+}
+
+
 void *Count(void *c)
 {
     int current_Pix = 0;
@@ -206,22 +227,23 @@ void *Count(void *c)
         
         //a[counter] = counter;
         current_Pix = counter;
-        counter = counter + l;
+        counter = counter + 1;
         //printf("Counter: %d\n", counter);
         pthread_mutex_unlock( &stopIt );
 
-        if(current_Pix >= end){
-            //printf("Can we break?\n");
+        if(current_Pix >= l){
             break;
         }
-        for (int i = current_Pix; i < current_Pix + l; i++) {
+        for (int i = current_Pix*l; i < current_Pix*l + l; i++) {
             complex x_0 = complex_representation(i);
             struct newton a;
-            switch (d)
-            {
-                case 2: a = newtons_method2(x_0); break;
-                default: a = newtons_method(x_0); break;
-            }
+            //switch (d)
+            //{
+            //    case 2: a = newtons_method2(x_0); break;
+            //    default: a = newtons_method(x_0); break;
+            //}
+
+            a = newtons_method(x_0);
 
             convergence[i] = a.iterations;
             attraction[i] = a.root;
@@ -274,23 +296,26 @@ int main(int argc, char **argv)
     //a = (int *) malloc(2*sizeof(int));
     convergence = (int *) malloc(l*l*sizeof(int));
     attraction = (int *) malloc(l*l*sizeof(int));
+    memoryPool = (int *) malloc(MEMORY_POOL_NR_OF_ROWS*l*sizeof(int));
 
     int NUM_THREADS = t;
 
     pthread_mutex_init(&stopIt, NULL);
     
     pthread_t threads[NUM_THREADS];
+    pthread_t writeThread;
     int val;
-    for(long r=0; r<NUM_THREADS; r++){
+    long r;
+    for(r = 0; r<NUM_THREADS; r++){
         val = pthread_create(&threads[r], NULL, Count, (void *)r);
-
-    }   
+    }
+    val = pthread_create(&writeThread, NULL, Write, (void *)r);
 
     for(int i = 0; i<NUM_THREADS; i++){
         pthread_join(threads[i], NULL);
     }
-    //printf("Here is the array\n%d\n", a[0]);
-    //printf("%d\n", a[1]);
+    pthread_join(writeThread, NULL);
+
     int max=0;
     for(int i = 0; i < l*l; i++){
         if(max < convergence[i])
@@ -402,6 +427,7 @@ int main(int argc, char **argv)
     free(convergence);
     free(attraction);
     free(roots);
+    free(memoryPool);
     //free(colorStrings);
     for (int i = 0; i < max; i++) {
         free(convergenceStrings[i]);
