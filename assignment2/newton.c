@@ -253,11 +253,13 @@ void *Count(void *c)
     int current_Pix = 0;
     int saveRow;
     int saveIndex;
-    unsigned long int i;
+    int i;
+    int j;
 
     while(1){
         pthread_mutex_lock( &stopIt );
         
+        //a[counter] = counter;
         current_Pix = counter;
         counter = counter + 1;
         //printf("Counter: %d\n", counter, rowsWritten);
@@ -271,18 +273,31 @@ void *Count(void *c)
             break;
         }
 
+        //pthread_mutex_lock(&stopIt);
+        //while(rowsWritten < current_Pix - 2*thrshld)
+        //{
+        //    pthread_cond_wait(&waitCond, &stopIt);
+        //}
+        //pthread_mutex_unlock(&stopIt);
+
         saveRow = current_Pix % MEMORY_POOL_NR_OF_ROWS;
 
-        for (i = current_Pix*l; i < current_Pix*l + l; i++) {
-            complex x_0 = complex_representation(i);
+        for (i = 0; i < l; i++) {
+            j = current_Pix*l + i;
+            complex x_0 = complex_representation(j);
+        //for (i = current_Pix*l; i < current_Pix*l + l; i++) {
+         //   complex x_0 = complex_representation(i);
             struct newton a;
 
             a = newtons_method(x_0);
 
-            saveIndex = i % l;
+            //saveIndex = i % l;
 
-            memoryPoolConvergence[saveRow*l + saveIndex] = a.iterations;
-            memoryPoolAttraction[saveRow*l + saveIndex] = a.root;
+            memoryPoolConvergence[saveRow*l + i] = a.iterations;
+            memoryPoolAttraction[saveRow*l + i] = a.root;
+
+            //convergence[i] = a.iterations;
+            //attraction[i] = a.root;
         }
         //printf("Iterations: %d \n", a.iterations);
     }
@@ -324,6 +339,11 @@ int main(int argc, char **argv)
 
     printf("t = %d, l = %d, d = %d\n", t, l, d);
     
+    //double complex z = -3.0 + 1.0 * I;
+    //struct newton n = newtons_method(z, d);
+    //printf("iterations = %d\n", n.iterations);
+
+    //a = (int *) malloc(2*sizeof(int));
     memoryPoolAttraction = (int *) malloc(MEMORY_POOL_NR_OF_ROWS*l*sizeof(int));
     memoryPoolConvergence = (int *) malloc(MEMORY_POOL_NR_OF_ROWS*l*sizeof(int));
 
@@ -345,9 +365,30 @@ int main(int argc, char **argv)
     }
     pthread_join(writeThread, NULL);
 
+    
+    /*
+    snprintf(fname, PATH_MAX, "newton_attractors_x%d.txt", d);
+    FILE * ftxt = fopen(fname, "w");
+    for(int i = 0; i < l*l; i++){
+        if (attraction[i] == d) {
+            fprintf(ftxt, "%d ", 0);
+        } else {
+            fprintf(ftxt, "%d ", attraction[i]);
+        }
+        if((i+1)%l == 0){
+            fprintf(ftxt, "\n");
+        }
+    }
+    fclose(ftxt);
+    */
+    
+
+    //free(convergence);
+    //free(attraction);
     free(memoryPoolAttraction);
     free(memoryPoolConvergence);
     free(roots);
+    //free(colorStrings);
 
     return 0;
 }
