@@ -139,6 +139,41 @@ static struct newton newtons_method(double complex x_0) {
     return ret;
 }
 
+static struct newton newtons_method2(double complex x_0) {
+    int root;
+    int iterations = 0;
+    int running = 1;
+    double factor2 = 0.5;
+    double factor1 = 0.5;
+        
+    double complex x_i = x_0;
+    while(running) {
+        if(iabs(x_i) < LIMITSQ || creal(x_i) > TOBIG || cimag(x_i) > TOBIG) {
+            root = d;
+            iterations = 255;
+            running = 0;
+            break;
+        } else {
+            for (int i = 0; i < d; i++) {
+                if(iabs(roots[i] - x_i) < LIMITSQ) {
+                    root = i;
+                    running = 0;
+                    iterations--;
+                    break;
+                }
+            }
+        }
+        x_i = factor1*x_i + factor2*(1./x_i);
+        iterations++;
+    }
+    
+    struct newton ret = {iterations, root};
+    
+    return ret;
+}
+
+struct newton (*newtonPtr)(double complex);
+
 pthread_mutex_t stopIt = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t waitCond = PTHREAD_COND_INITIALIZER;
 
@@ -248,7 +283,7 @@ void *Count(void *c)
             complex x_0 = complex_representation(j);
             struct newton a;
 
-            a = newtons_method(x_0);
+            a = (*newtonPtr)(x_0);
 
             memoryPoolConvergence[saveRow*l + i] = a.iterations;
             memoryPoolAttraction[saveRow*l + i] = a.root;
@@ -294,6 +329,12 @@ int main(int argc, char **argv)
     memoryPoolConvergence = (int *) malloc(MEMORY_POOL_NR_OF_ROWS*l*sizeof(int));
 
     int NUM_THREADS = t;
+
+    if (d == 2) {
+        newtonPtr = &newtons_method2;
+    } else {
+        newtonPtr = &newtons_method;
+    }
 
     pthread_mutex_init(&stopIt, NULL);
     
