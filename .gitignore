@@ -37,3 +37,6 @@
 
 # Vim
 *.swp
+
+# Additional
+*cell
