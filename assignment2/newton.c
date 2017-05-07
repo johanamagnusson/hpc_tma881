@@ -5,18 +5,17 @@
 #include <math.h>
 #include <pthread.h>
 
-#define MEMORY_POOL_NR_OF_ROWS 80
+#define MEMORY_POOL_NR_OF_ROWS 120
 
 int counter = 0;
-//int *a;
 
 int l;
 int t;
 int d;
-int end;
 double complex *roots;
 int rowsWritten = 0;
-int thrshld = 30;
+int thrshld = 40;
+int max = 0;
 
 int *memoryPoolAttraction;
 int *memoryPoolConvergence;
@@ -84,7 +83,7 @@ static int root_as_int(double complex root){
         arg += 2*M_PI;
     }
     int ret = (int) ((arg/(2*M_PI/ (double) d)) + 1.5);
-    return ret; // add 1 to make root = 1.0 => nbr 1. add 0.5 to correctly round double to int
+    return ret;
 }
 
 double complex ipow(complex double base, int exp)
@@ -118,6 +117,7 @@ static struct newton newtons_method(double complex x_0) {
     while(running) {
         if(iabs(x_i) < LIMITSQ || creal(x_i) > TOBIG || cimag(x_i) > TOBIG) {
             root = d;
+            iterations = 255;
             running = 0;
             break;
         } else {
@@ -133,8 +133,9 @@ static struct newton newtons_method(double complex x_0) {
         x_i = factor1*x_i + factor2*(1./ipow(x_i, d_prim));
         iterations++;
     }
+    
     struct newton ret = {iterations, root};
-    //printf("%d\n", iterations);
+    
     return ret;
 }
 
@@ -144,12 +145,12 @@ static struct newton newtons_method2(double complex x_0) {
     int running = 1;
     double factor2 = 0.5;
     double factor1 = 0.5;
-    int d_prim = 1;
         
     double complex x_i = x_0;
     while(running) {
         if(iabs(x_i) < LIMITSQ || creal(x_i) > TOBIG || cimag(x_i) > TOBIG) {
             root = d;
+            iterations = 255;
             running = 0;
             break;
         } else {
@@ -162,45 +163,19 @@ static struct newton newtons_method2(double complex x_0) {
                 }
             }
         }
-        x_i = factor1*x_i + factor2*1./x_i;
+        x_i = factor1*x_i + factor2*(1./x_i);
         iterations++;
     }
+    
     struct newton ret = {iterations, root};
-    //printf("%d\n", iterations);
+    
     return ret;
 }
 
-pthread_mutex_t stopIt;
+struct newton (*newtonPtr)(double complex);
 
-//pthread_mutex_t write1;
-
-//pthread_mutex_t write2;
-
-//void start_Thread(){
-//    int writer;
-//    pthread_t k;
-//    writer = pthread_create(&k, NULL, Write, (void *)1);
-//}
-
-//void *Write(void *w)
-//{
-//    while(1){
-
-//        pthread_mutex_lock( &write1 );
-//        printf("Write from first memory pool %d\n", counter);
-//        pthread_mutex_unlock( &write1 );
-
-//        pthread_mutex_lock( &write2 );
-//        printf("Write from second memory pool %d\n", counter);
-//        pthread_mutex_unlock( &write2);
-
-//        if(counter >= end){
-//            break;
-//        }
-
-//   }
-//}
-
+pthread_mutex_t stopIt = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t waitCond = PTHREAD_COND_INITIALIZER;
 
 
 void *Write(void *w)
@@ -226,7 +201,7 @@ void *Write(void *w)
 
     int num;
     char **convergenceStrings = (char **) malloc((max+1) * sizeof(char *));
-    for (int i = 0; i <= max; i++) {
+    for (i = 0; i <= max; i++) {
         convergenceStrings[i] = (char *) malloc(20 * sizeof(char));
         if (i > 255) {
             num = 0;
@@ -242,8 +217,7 @@ void *Write(void *w)
     snprintf(fname, PATH_MAX, "newton_convergence_x%d.ppm", d);
     FILE * fcon = fopen(fname, "w");
     fprintf(fcon, "P3\n%d %d\n255\n", l, l);
-
-
+    
     while(rowsWritten < l) {
         if(rowsWritten + thrshld < counter || rowsWritten > l - thrshld) {
             for(i = writeRow*l; i < writeRow*l + l; i++) {
@@ -252,9 +226,17 @@ void *Write(void *w)
                 } else {
                     fprintf(fatt, "%s", colorStrings[memoryPoolAttraction[i]]);
                 }
-                fprintf(fcon, "%s", convergenceStrings[memoryPoolConvergence[i]]);
+                if (memoryPoolConvergence[i] > 255) {
+                    fprintf(fcon, "%s", convergenceStrings[max]);
+                } else {
+                    fprintf(fcon, "%s", convergenceStrings[memoryPoolConvergence[i]]);
+                }
             }
+            //Tell the calculating how far we have been writing
+            pthread_mutex_lock(&stopIt);
             rowsWritten += 1;
+            pthread_cond_signal(&waitCond);
+            pthread_mutex_unlock(&stopIt);
             writeRow = (writeRow + 1) % MEMORY_POOL_NR_OF_ROWS;
         }
     }
@@ -272,38 +254,41 @@ void *Count(void *c)
     int current_Pix = 0;
     int saveRow;
     int saveIndex;
+    int i;
+    int j;
+
     while(1){
         pthread_mutex_lock( &stopIt );
         
-        //a[counter] = counter;
         current_Pix = counter;
         counter = counter + 1;
-        //printf("Counter: %d\n", counter);
+        
+        //If the write to file thread is to slow, we wait for it        
+        
+        while(rowsWritten < current_Pix - 2*thrshld)
+        {
+            pthread_cond_wait(&waitCond, &stopIt);
+        }
         pthread_mutex_unlock( &stopIt );
 
         if(current_Pix >= l){
             break;
         }
 
+
         saveRow = current_Pix % MEMORY_POOL_NR_OF_ROWS;
 
-        for (int i = current_Pix*l; i < current_Pix*l + l; i++) {
-            complex x_0 = complex_representation(i);
+        for (i = 0; i < l; i++) {
+            j = current_Pix*l + i;
+            complex x_0 = complex_representation(j);
             struct newton a;
 
-            a = newtons_method(x_0);
+            a = (*newtonPtr)(x_0);
 
-            saveIndex = i % l;
-
-            memoryPoolConvergence[saveRow*l + saveIndex] = a.iterations;
-            memoryPoolAttraction[saveRow*l + saveIndex] = a.root;
-
-            //convergence[i] = a.iterations;
-            //attraction[i] = a.root;
+            memoryPoolConvergence[saveRow*l + i] = a.iterations;
+            memoryPoolAttraction[saveRow*l + i] = a.root;
         }
-        //printf("Iterations: %d \n", a.iterations);
     }
-    //printf("Yes we can!\n");
     pthread_exit(NULL);
 }
 
@@ -327,7 +312,6 @@ int main(int argc, char **argv)
     t = arguments.t;
     l = arguments.l;
     d = arguments.d;
-    end = l*l;
 
     n = (double) d;
 
@@ -336,21 +320,21 @@ int main(int argc, char **argv)
     for (int i = 0; i < d; i++) {
         double arg = (2 * M_PI / n) * i;
         roots[i] = cexp(arg * I);
-        //printf("%.8f\n", arg);
-        //printf("%f + i%f\n", creal(roots[i]), cimag(roots[i]));
     }
 
     printf("t = %d, l = %d, d = %d\n", t, l, d);
     
-    //double complex z = -3.0 + 1.0 * I;
-    //struct newton n = newtons_method(z, d);
-    //printf("iterations = %d\n", n.iterations);
 
-    //a = (int *) malloc(2*sizeof(int));
     memoryPoolAttraction = (int *) malloc(MEMORY_POOL_NR_OF_ROWS*l*sizeof(int));
     memoryPoolConvergence = (int *) malloc(MEMORY_POOL_NR_OF_ROWS*l*sizeof(int));
 
     int NUM_THREADS = t;
+
+    if (d == 2) {
+        newtonPtr = &newtons_method2;
+    } else {
+        newtonPtr = &newtons_method;
+    }
 
     pthread_mutex_init(&stopIt, NULL);
     
@@ -368,30 +352,10 @@ int main(int argc, char **argv)
     }
     pthread_join(writeThread, NULL);
 
-    
-    /*
-    snprintf(fname, PATH_MAX, "newton_attractors_x%d.txt", d);
-    FILE * ftxt = fopen(fname, "w");
-    for(int i = 0; i < l*l; i++){
-        if (attraction[i] == d) {
-            fprintf(ftxt, "%d ", 0);
-        } else {
-            fprintf(ftxt, "%d ", attraction[i]);
-        }
-        if((i+1)%l == 0){
-            fprintf(ftxt, "\n");
-        }
-    }
-    fclose(ftxt);
-    */
-    
 
-    //free(convergence);
-    //free(attraction);
     free(memoryPoolAttraction);
     free(memoryPoolConvergence);
     free(roots);
-    //free(colorStrings);
 
     return 0;
 }
