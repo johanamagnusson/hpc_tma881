@@ -95,7 +95,6 @@ int main(int argc, char **argv)
     printf("t: %d\n", t);
     
     
-    FILE *myfile;
     float myvariable;
     int i;
     int j;
@@ -106,6 +105,9 @@ int main(int argc, char **argv)
     float a[length][3];
     float current_point[3];
     float compare_point[3];
+    
+    //read file
+    FILE *myfile;
     myfile=fopen("cells", "r");
     int HEIGHT = 10;
     int WIDTH = 3;
@@ -117,8 +119,9 @@ int main(int argc, char **argv)
         }
         printf("\n");
     }
-
     fclose(myfile);
+    
+    //calculate distances
     int k = 0;
     for(i = 0; i < HEIGHT; i++){
         for (j = i+1 ; j < HEIGHT; j++){
@@ -126,6 +129,8 @@ int main(int argc, char **argv)
             k++;
         }
     }
+
+    //sort and pritn array
     sort_array(combinations, &b[0]);
     for(i = 0; i < combinations; i++){
         printf("distance: %.3f\n", b[i]);
