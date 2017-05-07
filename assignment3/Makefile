@@ -1,6 +1,6 @@
 OBJS = cell_distances.o
 OBJS2 = make_cell.o
-LIBS = -lm -fopenmp
+LIBS = -lgomp -fopenmp -lm
 CC = gcc
 CFLAGS = -O3
 .PHONY : all

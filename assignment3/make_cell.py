@@ -1,6 +1,6 @@
 import random as rand
 
-NUMBER_OF_POINTS = 10000
+NUMBER_OF_POINTS = int(1e2)
 
 def make_string(coordinate):
     string = ""
