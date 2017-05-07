@@ -44,19 +44,27 @@ double compute_distance(
         )
 {
     double ret;
-    double dx = x2 - x1;
-    double dy = y2 - y1;
-    double dz = z2 - z1;
-    ret = sqrt(dx*dx + dy*dy + dz*dz);
+    //double dx = x2 - x1;
+    //double dy = y2 - y1;
+    //double dz = z2 - z1;
+    //ret = sqrt(dx*dx + dy*dy + dz*dz);
+    ret = sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)+(z2-z1)*(z2-z1));
     return ret;
 }
 
-//int *get_pair(int index)
+int *get_pair(int index, int mod, int add)
+{
+    int ret[2];
+    ret[0] = index % mod;
+    ret[1] = (index % mod) + add;
+}
+
 
 int main(int argc, char **argv)
 {
     FILE *cellFile;
     int i, j, ret;
+    int pair[2];
     double distance;
     char ch;
     struct arguments arguments;
@@ -82,7 +90,6 @@ int main(int argc, char **argv)
     
     numberOfDistances = numberOfPoints * (numberOfPoints - 1) / 2;
     short *distances = (short *) malloc(numberOfDistances * sizeof(short));
-
 
     fseek(cellFile, 0, SEEK_SET);
     for (i = 0; i < numberOfPoints; i++)
@@ -113,11 +120,10 @@ int main(int argc, char **argv)
                     points[i][2],
                     points[j][2]
                     );
-            distances[count] = (short) (distance * 100.0 + 0.5);
+            distances[count] = (short) (distance * 100.0 +0.5);
             count++;
         }
     }
-
 
     printf("Number of threads: %d\n", NUM_THREADS);
     printf("Number of points: %lu\n", numberOfPoints);
