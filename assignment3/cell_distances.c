@@ -44,11 +44,10 @@ double compute_distance(
         )
 {
     double ret;
-    //double dx = x2 - x1;
-    //double dy = y2 - y1;
-    //double dz = z2 - z1;
-    //ret = sqrt(dx*dx + dy*dy + dz*dz);
-    ret = sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)+(z2-z1)*(z2-z1));
+    double dx = x2 - x1;
+    double dy = y2 - y1;
+    double dz = z2 - z1;
+    ret = sqrt(dx*dx + dy*dy + dz*dz);
     return ret;
 }
 
@@ -120,7 +119,7 @@ int main(int argc, char **argv)
                     points[i][2],
                     points[j][2]
                     );
-            distances[count] = (short) (distance * 100.0 +0.5);
+            distances[count] = (short) (distance * 100.0 + 0.5);
             count++;
         }
     }
