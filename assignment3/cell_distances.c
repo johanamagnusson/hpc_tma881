@@ -4,6 +4,8 @@
 #include <math.h>
 #include <omp.h>
 
+double **points;
+short *distances;
 
 struct arguments
 {
@@ -81,14 +83,14 @@ int main(int argc, char **argv)
             numberOfPoints++;
     } while (ch != EOF);
 
-    double **points =  malloc(numberOfPoints * sizeof(double *));
+    points =  malloc(numberOfPoints * sizeof(double *));
     for (i = 0; i < numberOfPoints; i++)
     {
         points[i] = malloc(3 * sizeof(double));
     }
     
     numberOfDistances = numberOfPoints * (numberOfPoints - 1) / 2;
-    short *distances = (short *) malloc(numberOfDistances * sizeof(short));
+    distances = (short *) malloc(numberOfDistances * sizeof(short));
 
     fseek(cellFile, 0, SEEK_SET);
     for (i = 0; i < numberOfPoints; i++)
