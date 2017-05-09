@@ -4,8 +4,10 @@
 #include <math.h>
 #include <omp.h>
 
+#define NUMBER_OF_DISTANCES 3464
+
 double **points;
-int distanceHist[3464];
+int distanceHist[NUMBER_OF_DISTANCES];
 
 struct arguments
 {
@@ -55,11 +57,10 @@ double compute_distance(
 
 int main(int argc, char **argv)
 {
-    const unsigned int numberOfDistances = 3464;
     FILE *cellFile;
     int i, j, ret, distanceIndex;
     double distance;
-    double distances[3464];
+    double distances[NUMBER_OF_DISTANCES];
     char ch;
     struct arguments arguments;
     unsigned long int numberOfPoints;
@@ -84,7 +85,7 @@ int main(int argc, char **argv)
     }
 
     //distanceHist = (int *) malloc(numberOfDistances * sizeof(int));
-    for (i = 0; i < numberOfDistances; i++)
+    for (i = 0; i < NUMBER_OF_DISTANCES; i++)
     {
         distanceHist[i] = 0;
         distances[i] = (double) i * 0.01;
@@ -120,11 +121,11 @@ int main(int argc, char **argv)
     }
     
     
-    for (i = 0; i < numberOfDistances; i++)
+    for (i = 0; i < NUMBER_OF_DISTANCES; i++)
     {   
         if (distanceHist[i] > 0)
         {
-            printf("%02.2f %d\n", distances[i], distanceHist[i]);
+            printf("%05.2f %d\n", distances[i], distanceHist[i]);
         }
     }
 
