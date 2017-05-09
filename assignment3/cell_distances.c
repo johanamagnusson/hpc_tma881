@@ -4,7 +4,6 @@
 #include <math.h>
 #include <omp.h>
 
-
 struct arguments
 {
     int t;
@@ -105,12 +104,16 @@ int main(int argc, char **argv)
         */
     }
     fclose(cellFile);
-
+    
+    omp_set_num_threads(4);
+    #pragma omp parallel for private(k,j) shared() collapse(2) //reduction()
+    
     count = 0;
     for (i = 0; i < numberOfPoints; i++)
     {
-        for (j = i + 1; j < numberOfPoints; j++)
-        {   
+        for (j = 0; j < numberOfPoints; j++)
+        {    
+  
             distance = compute_distance(
                     points[i][0],
                     points[j][0],
@@ -122,7 +125,10 @@ int main(int argc, char **argv)
             distances[count] = (short) (distance * 100.0 + 0.5);
             count++;
         }
+        
     }
+    
+    #pragma omp parallel end
 
     printf("Number of threads: %d\n", NUM_THREADS);
     printf("Number of points: %lu\n", numberOfPoints);
