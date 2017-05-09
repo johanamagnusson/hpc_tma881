@@ -5,7 +5,7 @@
 #include <omp.h>
 
 double **points;
-short *distances;
+int distanceHist[3464];
 
 struct arguments
 {
@@ -53,23 +53,17 @@ double compute_distance(
     return ret;
 }
 
-int *get_pair(int index, int mod, int add)
-{
-    int ret[2];
-    ret[0] = index % mod;
-    ret[1] = (index % mod) + add;
-}
-
-
 int main(int argc, char **argv)
 {
+    const unsigned int numberOfDistances = 3464;
     FILE *cellFile;
-    int i, j, ret;
-    int pair[2];
+    int i, j, ret, distanceIndex;
     double distance;
+    double distances[3464];
     char ch;
     struct arguments arguments;
-    unsigned long int numberOfPoints, numberOfDistances, count;
+    unsigned long int numberOfPoints;
+
     
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
     int NUM_THREADS = arguments.t;
@@ -88,9 +82,13 @@ int main(int argc, char **argv)
     {
         points[i] = malloc(3 * sizeof(double));
     }
-    
-    numberOfDistances = numberOfPoints * (numberOfPoints - 1) / 2;
-    distances = (short *) malloc(numberOfDistances * sizeof(short));
+
+    //distanceHist = (int *) malloc(numberOfDistances * sizeof(int));
+    for (i = 0; i < numberOfDistances; i++)
+    {
+        distanceHist[i] = 0;
+        distances[i] = (double) i * 0.01;
+    }
 
     fseek(cellFile, 0, SEEK_SET);
     for (i = 0; i < numberOfPoints; i++)
@@ -98,17 +96,12 @@ int main(int argc, char **argv)
         ret = fscanf(cellFile, "%lf", &points[i][0]);
         ret = fscanf(cellFile, "%lf", &points[i][1]);
         ret = fscanf(cellFile, "%lf", &points[i][2]);
-
-        /*
-        printf("%.3f %.3f %.3f\n",
-                points[i][0],
-                points[i][1],
-                points[i][2]);
-        */
     }
     fclose(cellFile);
 
-    count = 0;
+    printf("Number of threads: %d\n", NUM_THREADS);
+    printf("Number of points: %lu\n", numberOfPoints);
+    
     for (i = 0; i < numberOfPoints; i++)
     {
         for (j = i + 1; j < numberOfPoints; j++)
@@ -121,20 +114,25 @@ int main(int argc, char **argv)
                     points[i][2],
                     points[j][2]
                     );
-            distances[count] = (short) (distance * 100.0 + 0.5);
-            count++;
+            distanceIndex = (int) (distance * 100.0 + 0.5);
+            distanceHist[distanceIndex]++;
         }
     }
-
-    printf("Number of threads: %d\n", NUM_THREADS);
-    printf("Number of points: %lu\n", numberOfPoints);
-    printf("Number of distances: %lu\n", numberOfDistances);
+    
+    
+    for (i = 0; i < numberOfDistances; i++)
+    {   
+        if (distanceHist[i] > 0)
+        {
+            printf("%02.2f %d\n", distances[i], distanceHist[i]);
+        }
+    }
 
     for (i = 0; i < numberOfPoints; i++)
     {
         free(points[i]);
     }
-    free(distances);
+    //free(distanceHist);
 
     return 0;
 }
