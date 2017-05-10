@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 {
     FILE *cellFile;
     int i, j, ret, distanceIndex;
-    double distance;
+    double distance, dx, dy, dz;
     double distances[NUMBER_OF_DISTANCES];
     char ch;
     struct arguments arguments;
@@ -100,25 +100,29 @@ int main(int argc, char **argv)
     }
     fclose(cellFile);
     
-    omp_set_num_threads(4);
-    #pragma omp parallel for private(k,j) shared() collapse(2) //reduction()
+  //  omp_set_num_threads(4);
+    //#pragma omp parallel for private(k,j) shared() collapse(2) //reduction()
     
     printf("Number of threads: %d\n", NUM_THREADS);
     printf("Number of points: %lu\n", numberOfPoints);
     
     for (i = 0; i < numberOfPoints; i++)
     {
-        for (j = 0; j < numberOfPoints; j++)
+        for (j = i + 1; j < numberOfPoints; j++)
         {    
   
-            distance = compute_distance(
-                    points[i][0],
-                    points[j][0],
-                    points[i][1],
-                    points[j][1],
-                    points[i][2],
-                    points[j][2]
-                    );
+            //distance = compute_distance(
+            //        points[i][0],
+            //        points[j][0],
+            //        points[i][1],
+            //        points[j][1],
+            //        points[i][2],
+            //        points[j][2]
+            //        );
+            dx = points[i][0] - points[j][0];
+            dy = points[i][1] - points[j][1];
+            dz = points[i][2] - points[j][2];
+            distance = sqrt(dx*dx + dy*dy + dz*dz);
             distanceIndex = (int) (distance * 100.0 + 0.5);
             distanceHist[distanceIndex]++;
         }
@@ -134,7 +138,7 @@ int main(int argc, char **argv)
         
     }
     
-    #pragma omp parallel end
+//    #pragma omp parallel end
 
     printf("Number of threads: %d\n", NUM_THREADS);
     printf("Number of points: %lu\n", numberOfPoints);
@@ -143,7 +147,6 @@ int main(int argc, char **argv)
     {
         free(points[i]);
     }
-    //free(distanceHist);
 
     return 0;
 }
