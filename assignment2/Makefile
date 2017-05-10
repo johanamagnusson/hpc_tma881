@@ -13,4 +13,4 @@ newton : $(OBJS)
 newton.o : newton.c
 
 clean :
-	rm -f newton newton.o *.ppm
+	rm -f newton newton.o *.ppm *.txt
