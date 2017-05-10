@@ -105,10 +105,11 @@ int main(int argc, char **argv)
     
     printf("Number of threads: %d\n", NUM_THREADS);
     printf("Number of points: %lu\n", numberOfPoints);
-    
-    for (i = 0; i < numberOfPoints; i++)
+    int iterations = 0;
+    //för den kvadraten i trianglen utan problem 
+    for (i = numberOfPoints/2; i < numberOfPoints; i++)
     {
-        for (j = i + 1; j < numberOfPoints; j++)
+        for (j = 0; j < numberOfPoints/2; j++)
         {    
   
             //distance = compute_distance(
@@ -125,10 +126,45 @@ int main(int argc, char **argv)
             distance = sqrt(dx*dx + dy*dy + dz*dz);
             distanceIndex = (int) (distance * 100.0 + 0.5);
             distanceHist[distanceIndex]++;
+            iterations++;
         }
     }
     
-    
+    //för trianglarna som läggs ihop
+    for (i = 0; i < numberOfPoints/2; i++)
+    {
+        for (j = 0; j < numberOfPoints/2 - 1; j++)
+        {    
+  
+            //distance = compute_distance(
+            //        points[i][0],
+            //        points[j][0],
+            //        points[i][1],
+            //        points[j][1],
+            //        points[i][2],
+            //        points[j][2]
+            //        );
+            if(j < i){
+                dx = points[i][0] - points[j][0];
+                dy = points[i][1] - points[j][1];
+                dz = points[i][2] - points[j][2];
+                distance = sqrt(dx*dx + dy*dy + dz*dz);
+                distanceIndex = (int) (distance * 100.0 + 0.5);
+                distanceHist[distanceIndex]++;
+                iterations++;
+            }else{
+                int new_i = numberOfPoints - 1 - i;
+                int new_j = numberOfPoints - 2 - j;
+                dx = points[new_i][0] - points[new_j][0];
+                dy = points[new_i][1] - points[new_j][1];
+                dz = points[new_i][2] - points[new_j][2];
+                distance = sqrt(dx*dx + dy*dy + dz*dz);
+                distanceIndex = (int) (distance * 100.0 + 0.5);
+                distanceHist[distanceIndex]++;
+                iterations++;
+            }
+        }
+    }
     for (i = 0; i < NUMBER_OF_DISTANCES; i++)
     {   
         if (distanceHist[i] > 0)
@@ -142,6 +178,7 @@ int main(int argc, char **argv)
 
     printf("Number of threads: %d\n", NUM_THREADS);
     printf("Number of points: %lu\n", numberOfPoints);
+    printf("iterated: %d\n", iterations); 
 
     for (i = 0; i < numberOfPoints; i++)
     {
