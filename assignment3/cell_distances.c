@@ -117,19 +117,16 @@ int main(int argc, char **argv)
                     dx = points[i][0] - points[j][0];
                     dy = points[i][1] - points[j][1];
                     dz = points[i][2] - points[j][2];
-                    distance = sqrtf(dx*dx + dy*dy + dz*dz);
-                    distanceIndex = (int) (distance * 100.0 + 0.5);
-                    threadHist[distanceIndex]++;
                 } else {
                     new_i = numberOfPoints - 1 - i;
                     new_j = numberOfPoints - 2 - j;
                     dx = points[new_i][0] - points[new_j][0];
                     dy = points[new_i][1] - points[new_j][1];
                     dz = points[new_i][2] - points[new_j][2];
-                    distance = sqrtf(dx*dx + dy*dy + dz*dz);
-                    distanceIndex = (int) (distance * 100.0 + 0.5);
-                    threadHist[distanceIndex]++;
                 }
+            distance = sqrt(dx*dx + dy*dy + dz*dz);
+            distanceIndex = (int) (distance * 100.0 + 0.5);
+            threadHist[distanceIndex]++;
             }
         }
         #pragma omp critical (data_saving)

@@ -19,7 +19,7 @@ def make_string(coordinate):
     return string.format(coordinate[0], coordinate[1], coordinate[2])
 
 def main():
-    f = open("cell", "w")
+    f = open("cells", "w")
    
 
     for i in range(NUMBER_OF_POINTS):
