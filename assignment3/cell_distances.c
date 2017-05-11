@@ -109,22 +109,14 @@ int main(int argc, char **argv)
 
     long int iterations = 0;
     
-    #pragma omp parallel for private(i,j) shared(points) collapse(2) reduction(+:iterations)
-    //printf("Number of distances: %lu\n", numberOfDistances);
+    #pragma omp parallel for private(i,j) shared(points) collapse(2) reduction(+:distanceHist[:5])
+    
     //för den kvadraten i trianglen utan problem 
+    printf("This is thread %d\n", omp_get_thread_num() + 1);
     for (i = numberOfPoints/2; i < numberOfPoints; i++)
     {
         for (j = 0; j < numberOfPoints/2; j++)
         {    
-  
-            //distance = compute_distance(
-            //        points[i][0],
-            //        points[j][0],
-            //        points[i][1],
-            //        points[j][1],
-            //        points[i][2],
-            //        points[j][2]
-            //        );
             dx = points[i][0] - points[j][0];
             dy = points[i][1] - points[j][1];
             dz = points[i][2] - points[j][2];
@@ -135,40 +127,26 @@ int main(int argc, char **argv)
         }
     }
     #pragma omp parallel end
-    #pragma omp parallel for private(i,j) shared(points) collapse(2) //reduction(+:iterations)
+    #pragma omp parallel for private(i,j) shared(points) collapse(2) reduction(+:distanceHist[:5])
     //för trianglarna som läggs ihop
     for (i = 0; i < numberOfPoints/2; i++)
     {
         for (j = 0; j < numberOfPoints/2 - 1; j++)
         {    
-  
-            //distance = compute_distance(
-            //        points[i][0],
-            //        points[j][0],
-            //        points[i][1],
-            //        points[j][1],
-            //        points[i][2],
-            //        points[j][2]
-            //        );
             if(j < i){
                 dx = points[i][0] - points[j][0];
                 dy = points[i][1] - points[j][1];
                 dz = points[i][2] - points[j][2];
-                distance = sqrt(dx*dx + dy*dy + dz*dz);
-                distanceIndex = (int) (distance * 100.0 + 0.5);
-                distanceHist[distanceIndex]++;
-                iterations++;
             }else{
                 int new_i = numberOfPoints - 1 - i;
                 int new_j = numberOfPoints - 2 - j;
                 dx = points[new_i][0] - points[new_j][0];
                 dy = points[new_i][1] - points[new_j][1];
                 dz = points[new_i][2] - points[new_j][2];
-                distance = sqrt(dx*dx + dy*dy + dz*dz);
-                distanceIndex = (int) (distance * 100.0 + 0.5);
-                distanceHist[distanceIndex]++;
-                iterations++;
             }
+            distance = sqrt(dx*dx + dy*dy + dz*dz);
+            distanceIndex = (int) (distance * 100.0 + 0.5);
+            distanceHist[distanceIndex]++;
         }
     }
 
@@ -178,7 +156,7 @@ int main(int argc, char **argv)
     {   
         if (distanceHist[i] > 0)
         {
-            printf("%05.2f %d\n", distances[i], distanceHist[i]);
+           // printf("%05.2f %d\n", distances[i], distanceHist[i]);
         }
         
     }
