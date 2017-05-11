@@ -1,8 +1,8 @@
 OBJS = cell_distances.o
 OBJS2 = make_cell.o
-LIBS = -lgomp -fopenmp -lm
-CC = gcc
-CFLAGS = -O2
+LIBS = -lgomp -lm
+CC = gcc -std=c99
+CFLAGS = -O2 -fopenmp
 .PHONY : all
 
 all : cell_distances
