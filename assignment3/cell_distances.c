@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <argp.h>
 #include <math.h>
 #include <omp.h>
@@ -7,7 +8,6 @@
 #define NUMBER_OF_DISTANCES 3464
 
 double **points;
-int distanceHist[NUMBER_OF_DISTANCES];
 
 struct arguments
 {
@@ -58,14 +58,14 @@ double compute_distance(
 int main(int argc, char **argv)
 {
     FILE *cellFile;
-    int i, j, ret, distanceIndex;
-    double distance, dx, dy, dz;
+    size_t i, j;
+    int ret, distanceIndex;
     double distances[NUMBER_OF_DISTANCES];
+    int distanceHist[NUMBER_OF_DISTANCES];
     char ch;
     struct arguments arguments;
     unsigned long int numberOfPoints;
 
-    
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
     int NUM_THREADS = arguments.t;
 
@@ -99,80 +99,70 @@ int main(int argc, char **argv)
         ret = fscanf(cellFile, "%lf", &points[i][2]);
     }
     fclose(cellFile);
-    omp_set_nested(1);
-    static size_t const n_threads = 5; 
-    omp_set_num_threads(n_threads);
-    
-    printf("Number of threads: %d\n", NUM_THREADS);
-    printf("Number of points: %lu\n", numberOfPoints);
-   
 
+    omp_set_num_threads(NUM_THREADS);
+    
     long int iterations = 0;
     
-    #pragma omp parallel for private(i,j) shared(points) collapse(2) reduction(+:iterations)
-    //printf("Number of distances: %lu\n", numberOfDistances);
-    //för den kvadraten i trianglen utan problem 
-    for (i = numberOfPoints/2; i < numberOfPoints; i++)
+    int threadHist[NUMBER_OF_DISTANCES];
+    #pragma omp parallel private(i,j,threadHist) shared(points,distanceHist)
     {
-        for (j = 0; j < numberOfPoints/2; j++)
-        {    
-  
-            //distance = compute_distance(
-            //        points[i][0],
-            //        points[j][0],
-            //        points[i][1],
-            //        points[j][1],
-            //        points[i][2],
-            //        points[j][2]
-            //        );
-            dx = points[i][0] - points[j][0];
-            dy = points[i][1] - points[j][1];
-            dz = points[i][2] - points[j][2];
-            distance = sqrt(dx*dx + dy*dy + dz*dz);
-            distanceIndex = (int) (distance * 100.0 + 0.5);
-            distanceHist[distanceIndex]++;
-            iterations++;
+        double dx, dy, dz, distance;
+        for (i = 0; i < NUMBER_OF_DISTANCES; i++)
+        {
+            threadHist[i] = 0;
         }
-    }
-    #pragma omp parallel end
-    #pragma omp parallel for private(i,j) shared(points) collapse(2) //reduction(+:iterations)
-    //för trianglarna som läggs ihop
-    for (i = 0; i < numberOfPoints/2; i++)
-    {
-        for (j = 0; j < numberOfPoints/2 - 1; j++)
-        {    
-  
-            //distance = compute_distance(
-            //        points[i][0],
-            //        points[j][0],
-            //        points[i][1],
-            //        points[j][1],
-            //        points[i][2],
-            //        points[j][2]
-            //        );
-            if(j < i){
+        #pragma omp for collapse(2)
+        //printf("Number of distances: %lu\n", numberOfDistances);
+        //för den kvadraten i trianglen utan problem 
+        for (i = numberOfPoints/2; i < numberOfPoints; i++)
+        {
+            for (j = 0; j < numberOfPoints/2; j++)
+            {    
                 dx = points[i][0] - points[j][0];
                 dy = points[i][1] - points[j][1];
                 dz = points[i][2] - points[j][2];
                 distance = sqrt(dx*dx + dy*dy + dz*dz);
                 distanceIndex = (int) (distance * 100.0 + 0.5);
-                distanceHist[distanceIndex]++;
-                iterations++;
-            }else{
-                int new_i = numberOfPoints - 1 - i;
-                int new_j = numberOfPoints - 2 - j;
-                dx = points[new_i][0] - points[new_j][0];
-                dy = points[new_i][1] - points[new_j][1];
-                dz = points[new_i][2] - points[new_j][2];
-                distance = sqrt(dx*dx + dy*dy + dz*dz);
-                distanceIndex = (int) (distance * 100.0 + 0.5);
-                distanceHist[distanceIndex]++;
-                iterations++;
+                threadHist[distanceIndex]++;
+                //iterations++;
+            }
+        }
+        #pragma omp for collapse(2) //reduction(+:iterations)
+        //för trianglarna som läggs ihop
+        for (i = 0; i < numberOfPoints/2; i++)
+        {
+            for (j = 0; j < numberOfPoints/2 - 1; j++)
+            {    
+                if (j < i) {
+                    dx = points[i][0] - points[j][0];
+                    dy = points[i][1] - points[j][1];
+                    dz = points[i][2] - points[j][2];
+                    distance = sqrt(dx*dx + dy*dy + dz*dz);
+                    distanceIndex = (int) (distance * 100.0 + 0.5);
+                    threadHist[distanceIndex]++;
+                    //iterations++;
+                } else {
+                    int new_i = numberOfPoints - 1 - i;
+                    int new_j = numberOfPoints - 2 - j;
+                    dx = points[new_i][0] - points[new_j][0];
+                    dy = points[new_i][1] - points[new_j][1];
+                    dz = points[new_i][2] - points[new_j][2];
+                    distance = sqrt(dx*dx + dy*dy + dz*dz);
+                    distanceIndex = (int) (distance * 100.0 + 0.5);
+                    threadHist[distanceIndex]++;
+                    //iterations++;
+                }
+            }
+        }
+        #pragma omp critical (data_saving)
+        {
+            for (int i = 0; i < NUMBER_OF_DISTANCES; i++)
+            {
+                distanceHist[i] += threadHist[i];
             }
         }
     }
-
-    #pragma omp parallel end    
 
     for (i = 0; i < NUMBER_OF_DISTANCES; i++)
     {   
@@ -182,12 +172,11 @@ int main(int argc, char **argv)
         }
         
     }
-    
 //    #pragma omp parallel end
 
     printf("Number of threads: %d\n", NUM_THREADS);
     printf("Number of points: %lu\n", numberOfPoints);
-    printf("iterated: %ld\n", iterations); 
+    printf("Iterated: %ld\n", iterations); 
 
     for (i = 0; i < numberOfPoints; i++)
     {
