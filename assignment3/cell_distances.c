@@ -99,13 +99,18 @@ int main(int argc, char **argv)
         ret = fscanf(cellFile, "%lf", &points[i][2]);
     }
     fclose(cellFile);
-    
-  //  omp_set_num_threads(4);
-    //#pragma omp parallel for private(k,j) shared() collapse(2) //reduction()
+    omp_set_nested(1);
+    static size_t const n_threads = 5; 
+    omp_set_num_threads(n_threads);
     
     printf("Number of threads: %d\n", NUM_THREADS);
     printf("Number of points: %lu\n", numberOfPoints);
-    int iterations = 0;
+   
+
+    long int iterations = 0;
+    
+    #pragma omp parallel for private(i,j) shared(points) collapse(2) reduction(+:iterations)
+    //printf("Number of distances: %lu\n", numberOfDistances);
     //för den kvadraten i trianglen utan problem 
     for (i = numberOfPoints/2; i < numberOfPoints; i++)
     {
@@ -129,7 +134,8 @@ int main(int argc, char **argv)
             iterations++;
         }
     }
-    
+    #pragma omp parallel end
+    #pragma omp parallel for private(i,j) shared(points) collapse(2) //reduction(+:iterations)
     //för trianglarna som läggs ihop
     for (i = 0; i < numberOfPoints/2; i++)
     {
@@ -165,6 +171,9 @@ int main(int argc, char **argv)
             }
         }
     }
+
+    #pragma omp parallel end    
+
     for (i = 0; i < NUMBER_OF_DISTANCES; i++)
     {   
         if (distanceHist[i] > 0)
@@ -178,7 +187,7 @@ int main(int argc, char **argv)
 
     printf("Number of threads: %d\n", NUM_THREADS);
     printf("Number of points: %lu\n", numberOfPoints);
-    printf("iterated: %d\n", iterations); 
+    printf("iterated: %ld\n", iterations); 
 
     for (i = 0; i < numberOfPoints; i++)
     {
