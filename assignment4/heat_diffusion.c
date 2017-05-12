@@ -39,9 +39,9 @@ parse_opt(int key, char *arg,
 
 struct argp_option options[] =
 {
-    {"initial central value", 'i', "NUM", 0, "The mid point starting value"},
-    {"diffusion constant", 'd', "NUM", 0, "The diffusion constant"},
-    {"iterations", 'n', "NUM", 0, "The number of iterations"},
+    {"initial central value" , 'i' , "NUM" , 0 , "The mid point starting value"}, 
+    {"diffusion constant"    , 'd' , "NUM" , 0 , "The diffusion constant"}, 
+    {"iterations"            , 'n' , "NUM" , 0 , "The number of iterations"}, 
     {0}
 };
 
@@ -49,21 +49,21 @@ struct argp argp = { options, parse_opt, 0, 0 };
 
 int main(int argc, char **argv)
 {   
-    int width;
-    int height;
+    int         width;
+    int         height;
     long double initCentValue;
-    double diffusionConst;
-    int iterations;
-    struct arguments arguments;
+    double      diffusionConst;
+    int         iterations;
+    struct      arguments arguments;
 
-    width = atoi(argv[1]);
+    width  = atoi(argv[1]);
     height = atoi(argv[2]);
 
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
 
-    initCentValue = arguments.i;
+    initCentValue  = arguments.i;
     diffusionConst = arguments.d;
-    iterations = arguments.n;
+    iterations     = arguments.n;
     
     printf("Width                 : %d\n", width);
     printf("Height                : %d\n", height);
