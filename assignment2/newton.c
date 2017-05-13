@@ -350,102 +350,12 @@ int main(int argc, char **argv)
     for(int i = 0; i<NUM_THREADS; i++){
         pthread_join(threads[i], NULL);
     }
-<<<<<<< HEAD
-
-    /**
-    //printf("Here is the array\n%d\n", a[0]);
-    //printf("%d\n", a[1]);
-    int max=0;
-    for(int i = 0; i < l*l; i++){
-        if(max < convergence[i])
-            max = convergence[i];
-            //printf("hallå %d\n", max); 
-    }
-    int col;
-
-    if(d == 1){
-        col = 0;
-    }else{
-        col = 255/1;
-    }
-
-    int colour[7][3];
-
-    for(int i = 0; i<7; i++){
-        for(int j = 0; j<3; j++){
-            colour[i][j] = 0;
-        }
-    }
-
-    for(int i = 0; i<3; i++){
-        colour[i][i] = 255;
-    }
-
-    colour[3][0] = 255;
-    colour[3][1] = 255;
-    colour[4][0] = 255;
-    colour[4][1] = 128;
-    colour[5][1] = 255; 
-    colour[5][2] = 255;
-    colour[6][0] = 204; 
-    colour[6][2] = 204;
-
-    char fname[PATH_MAX];
-    snprintf(fname, PATH_MAX, "newton_attractors_x%d.ppm", d);
-    FILE * fatt = fopen(fname, "w");
-    fprintf(fatt, "P3\n%d %d\n255\n", l, l);
-    for(int i = 0; i < l*l; i++){
-        if (attraction[i] == 0) {
-            fprintf(fatt, "%d %d %d ", 0, 0, 0);
-        } else {
-            fprintf(fatt, "%d %d %d ", colour[attraction[i]-1][0],
-                                   colour[attraction[i]-1][1],
-                                   colour[attraction[i]-1][2]);
-        }
-        //if((i+1)%l == 0){
-        //    fprintf(fatt, "\n");
-        //}
-    }
-    fclose(fatt);
-
-    //snprintf(fname, PATH_MAX, "newton_attractors_x%d.txt", d);
-    //FILE * ftxt = fopen(fname, "w");
-    //for(int i = 0; i < l*l; i++){
-    //    if (attraction[i] == 0) {
-    //        fprintf(ftxt, "%d ", 0);
-    //    } else {
-    //        fprintf(ftxt, "%d ", attraction[i]);
-    //    }
-    //    if((i+1)%l == 0){
-    //        fprintf(ftxt, "\n");
-    //    }
-    //}
-    //fclose(ftxt);
-
-    snprintf(fname, PATH_MAX, "newton_convergence_x%d.ppm", d);
-    FILE * fcon = fopen(fname, "w");
-    fprintf(fcon, "P3\n%d %d\n255\n", l, l);
-    
-    for(int i = 0; i < l*l; i++){
-        fprintf(fcon, "%d %d %d ", 255-convergence[i]*col, 255-convergence[i]*col, 255-convergence[i]*col);
-        //if((i+1)%l == 0){
-        //    fprintf(fcon, "\n");
-        //}
-    }    
-
-    fclose(fcon);
-    */
-    
-    free(convergence);
-    free(attraction);
-=======
     pthread_join(writeThread, NULL);
 
 
     free(memoryPoolAttraction);
     free(memoryPoolConvergence);
     free(roots);
->>>>>>> 3222f6e40c530a5ad1cc851a097c423ac4393c2b
 
     return 0;
 }

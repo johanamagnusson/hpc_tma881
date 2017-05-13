@@ -6,7 +6,6 @@ CFLAGS = -O3
 
 all : newton
 
-
 newton : $(OBJS)
 	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS)
 
