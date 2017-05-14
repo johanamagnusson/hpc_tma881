@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <argp.h>
 #include <math.h>
+#include <CL/cl.h>
 
 
 struct arguments
@@ -56,6 +57,45 @@ int main(int argc, char **argv)
     int         iterations;
     struct      arguments arguments;
 
+    /* OpenCL requirements */
+    cl_int              error;
+    cl_platform_id      platform_id;
+    cl_uint             nmb_platforms;
+    cl_device_id        device_id;
+    cl_uint             nmb_devices;
+    cl_context          context;
+    cl_command_queue    command_queue;
+
+    if (clGetPlatformIDs(1, &platform_id, &nmb_platforms) != CL_SUCCESS)
+    {
+        printf("Cannot get platform\n");
+        return 1;
+    }
+    if (clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU,
+                1, &device_id, &nmb_devices) != CL_SUCCESS)
+    {
+        printf("Cannot get device\n");
+        return 1;
+    }
+    cl_context_properties properties[] =
+    {
+        CL_CONTEXT_PLATFORM,
+        (cl_context_properties) platform_id,
+        0
+    };
+    context = clCreateContext(properties, 1, &device_id, NULL, NULL, &error);
+    if (error != CL_SUCCESS)
+    {
+        printf("Cannot create context\n");
+        return 1;
+    }
+    command_queue = clCreateCommandQueue(context, device_id, 0, &error);
+    if (error != CL_SUCCESS)
+    {
+        printf("Cannot create queue\n");
+        return 1;
+    }
+
     width  = atoi(argv[1]);
     height = atoi(argv[2]);
 
@@ -70,7 +110,9 @@ int main(int argc, char **argv)
     printf("Initial central value : %Le\n", initCentValue);
     printf("Diffusion constant    : %.2f\n", diffusionConst);
     printf("Number of iterations  : %d\n", iterations);
-
+    
+    clReleaseContext(context);
+    clReleaseCommandQueue(command_queue);
 
     return 0;
 }

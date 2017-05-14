@@ -1,7 +1,7 @@
 OBJS = heat_diffusion.o
 OBJS2 = make_cell.o
-LIBS = -lm
-CC = gcc
+LIBS = -lm -lOpenCL
+CC = gcc -I /usr/local/cuda-7.5/targets/x86_64-linux/include -L /usr/local/cuda-7.5/targets/x86_64-linux/lib
 CFLAGS = -O2
 .PHONY : all
 
@@ -11,7 +11,7 @@ heat_diffusion : $(OBJS)
 	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS)
 
 hello : hello.c
-	$(CC) -I /usr/local/cuda-7.5/targets/x86_64-linux/include -L /usr/local/cuda-7.5/targets/x86_64-linux/lib -o $@ $< -lOpenCL
+	$(CC) -o $@ $< -lOpenCL
 
 heat_diffusion.o : heat_diffusion.c
 
