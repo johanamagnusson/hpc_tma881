@@ -7,8 +7,8 @@
 
 struct arguments
 {
-    long double i;
-    double d;
+    float i;
+    float d;
     int n;
 };
 
@@ -52,8 +52,8 @@ int main(int argc, char **argv)
 {   
     int         width;
     int         height;
-    long double initCentValue;
-    double      diffusionConst;
+    float       initCentValue;
+    float       diffusionConst;
     int         iterations;
     struct      arguments arguments;
 
@@ -107,12 +107,32 @@ int main(int argc, char **argv)
     
     printf("Width                 : %d\n", width);
     printf("Height                : %d\n", height);
-    printf("Initial central value : %Le\n", initCentValue);
+    printf("Initial central value : %le\n", initCentValue);
     printf("Diffusion constant    : %.2f\n", diffusionConst);
     printf("Number of iterations  : %d\n", iterations);
-    
+
+    /* Create buffers and allocate memory */
+    float *new = (float *) calloc(width * height, sizeof(float));
+    float *old = (float *) calloc(width * height, sizeof(float));
+
+    cl_mem buffer_new, buffer_old, buffer_width, buffer_height, buffer_diffusionConst;;
+    buffer_new = clCreateBuffer(context, CL_MEM_READ_WRITE,
+            width * height * sizeof(float), NULL, &error);
+    buffer_old = clCreateBuffer(context, CL_MEM_READ_WRITE,
+            width * height * sizeof(float), NULL, &error);
+
+    error = clEnqueueWriteBuffer(command_queue, buffer_new, CL_TRUE, 0,
+            width * height * sizeof(float), new, 0, NULL, NULL);
+    error = clEnqueueWriteBuffer(command_queue, buffer_old, CL_TRUE, 0,
+            width * height * sizeof(float), old, 0, NULL, NULL);
+
     clReleaseContext(context);
     clReleaseCommandQueue(command_queue);
+    clReleaseMemObject(buffer_new);
+    clReleaseMemObject(buffer_old);
+
+    free(new);
+    free(old);
 
     return 0;
 }
