@@ -20,5 +20,5 @@ __kernel void diffiusion(__global float* old_temp, __global float* new_temp, __g
         element += old_temp[i*length + j+1] + old_temp[i*length + j-1];
     }
     
-    new_temp[i, j] = diff_const * (element/4 - old_temp[i*length + j]);
+    new_temp[i*length + j] = old_temp[i*length + j] + diff_const * (element/4 - old_temp[i*length + j]);
 }
