@@ -1,7 +1,7 @@
 __kernel void diffiusion(__global float* old_temp, __global float* new_temp, __global int height, __global int length, __global float diff_const)
 {
-    int i = get_global_id(0);
-    int j = get_global_id(1);
+    int i = get_global_id(0) / width;
+    int j = i % width;
     float element = 0.;
 
     if(i == 0){

@@ -4,6 +4,7 @@
 #include <math.h>
 #include <CL/cl.h>
 
+#define MAX_SOURCE_SIZE (0x100000)
 
 struct arguments
 {
@@ -52,6 +53,8 @@ int main(int argc, char **argv)
 {   
     int         width;
     int         height;
+    int         fullWidth;
+    int         fullHeight;
     float       initCentValue;
     float       diffusionConst;
     int         iterations;
@@ -65,6 +68,8 @@ int main(int argc, char **argv)
     cl_uint             nmb_devices;
     cl_context          context;
     cl_command_queue    command_queue;
+    cl_program          program;
+    cl_kernel           kernel;
 
     if (clGetPlatformIDs(1, &platform_id, &nmb_platforms) != CL_SUCCESS)
     {
@@ -96,8 +101,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    width  = atoi(argv[1]);
-    height = atoi(argv[2]);
+    fullWidth  = atoi(argv[1]);
+    fullHeight = atoi(argv[2]);
+    width = fullWidth / 2;
+    height = fullHeight / 2;
 
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
 
@@ -115,7 +122,9 @@ int main(int argc, char **argv)
     float *new = (float *) calloc(width * height, sizeof(float));
     float *old = (float *) calloc(width * height, sizeof(float));
 
-    cl_mem buffer_new, buffer_old, buffer_width, buffer_height, buffer_diffusionConst;;
+    old[0] = initCentValue;
+
+    cl_mem buffer_new, buffer_old;
     buffer_new = clCreateBuffer(context, CL_MEM_READ_WRITE,
             width * height * sizeof(float), NULL, &error);
     buffer_old = clCreateBuffer(context, CL_MEM_READ_WRITE,
@@ -125,6 +134,49 @@ int main(int argc, char **argv)
             width * height * sizeof(float), new, 0, NULL, NULL);
     error = clEnqueueWriteBuffer(command_queue, buffer_old, CL_TRUE, 0,
             width * height * sizeof(float), old, 0, NULL, NULL);
+
+    /* Make program and execute */
+    FILE *fp;
+    const char fileName[] = "./kernels.cl";
+    size_t source_size;
+    char *source_str;
+
+    fp = fopen(fileName, "r");
+        if (!fp)
+        {
+            fprintf(stderr, "Failed to load kernel.\n");    
+            exit(1);
+        }    
+    source_str = (char *)malloc(MAX_SOURCE_SIZE);
+    source_size = fread(source_str, 1, MAX_SOURCE_SIZE, fp);
+    fclose(fp);
+
+    program = clCreateProgramWithSource(context, 1, (const char **) &source_str,
+            (const size_t *) &source_size, &error);
+    error = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+
+    kernel = clCreateKernel(program, "diffusion", &error);
+
+    error = clSetKernelArg(kernel , 0 , sizeof(cl_mem) , (void *)&buffer_old);
+    error = clSetKernelArg(kernel , 1 , sizeof(cl_mem) , (void *)&buffer_new);
+    error = clSetKernelArg(kernel , 2 , sizeof(int)    , &height);
+    error = clSetKernelArg(kernel , 3 , sizeof(int)    , &width);
+    error = clSetKernelArg(kernel , 4 , sizeof(float)  , &diffusionConst);
+    
+    size_t global_item_size = width * height;
+    size_t local_item_size = 1;
+
+    error = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
+            &global_item_size, &local_item_size, 0, NULL, NULL);
+
+    error = clEnqueueReadBuffer(command_queue, buffer_new, CL_TRUE, 0,
+            width * height * sizeof(float), new, 0, NULL, NULL);
+
+    int i, j;
+    for (int k = 0; k < width*height; k++)
+    {   
+        printf("%le\n", new[k]);
+    }
 
     clReleaseContext(context);
     clReleaseCommandQueue(command_queue);
