@@ -127,13 +127,29 @@ int main(int argc, char **argv)
     cl_mem buffer_new, buffer_old;
     buffer_new = clCreateBuffer(context, CL_MEM_READ_WRITE,
             width * height * sizeof(float), NULL, &error);
+    if (error != CL_SUCCESS) {
+        printf("cannot create buffer\n");
+        return 1;
+    }
     buffer_old = clCreateBuffer(context, CL_MEM_READ_WRITE,
             width * height * sizeof(float), NULL, &error);
+    if (error != CL_SUCCESS) {
+        printf("cannot create buffer\n");
+        return 1;
+    }
 
     error = clEnqueueWriteBuffer(command_queue, buffer_new, CL_TRUE, 0,
             width * height * sizeof(float), new, 0, NULL, NULL);
+    if (error != CL_SUCCESS) {
+        printf("cannot write to buffer\n");
+        return 1;
+    }
     error = clEnqueueWriteBuffer(command_queue, buffer_old, CL_TRUE, 0,
             width * height * sizeof(float), old, 0, NULL, NULL);
+    if (error != CL_SUCCESS) {
+        printf("cannot write to buffer \n");
+        return 1;
+    }
 
     /* Make program and execute */
     FILE *fp;
@@ -153,24 +169,60 @@ int main(int argc, char **argv)
 
     program = clCreateProgramWithSource(context, 1, (const char **) &source_str,
             (const size_t *) &source_size, &error);
+    if (error != CL_SUCCESS) {
+        printf("cannot create program\n");
+        return 1;
+    }
     error = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+    if (error != CL_SUCCESS) {
+        printf("cannot compile program \n");
+        return 1;
+    }
 
     kernel = clCreateKernel(program, "diffusion", &error);
 
     error = clSetKernelArg(kernel , 0 , sizeof(cl_mem) , (void *)&buffer_old);
+    if (error != CL_SUCCESS) {
+        printf("cannot set argument 0 \n");
+        return 1;
+    }
     error = clSetKernelArg(kernel , 1 , sizeof(cl_mem) , (void *)&buffer_new);
+    if (error != CL_SUCCESS) {
+        printf("cannot set argument 1 \n");
+        return 1;
+    }
     error = clSetKernelArg(kernel , 2 , sizeof(int)    , &height);
+    if (error != CL_SUCCESS) {
+        printf("cannot set argument 2 \n");
+        return 1;
+    }
     error = clSetKernelArg(kernel , 3 , sizeof(int)    , &width);
+    if (error != CL_SUCCESS) {
+        printf("cannot set argument 3 \n");
+        return 1;
+    }
     error = clSetKernelArg(kernel , 4 , sizeof(float)  , &diffusionConst);
+    if (error != CL_SUCCESS) {
+        printf("cannot set argument 4 \n");
+        return 1;
+    }
     
     size_t global_item_size = width * height;
     size_t local_item_size = 1;
 
     error = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
             &global_item_size, &local_item_size, 0, NULL, NULL);
+    if (error != CL_SUCCESS) {
+        printf("cannot run kernel \n");
+        return 1;
+    }
 
     error = clEnqueueReadBuffer(command_queue, buffer_new, CL_TRUE, 0,
             width * height * sizeof(float), new, 0, NULL, NULL);
+    if (error != CL_SUCCESS) {
+        printf("cannot read buffer \n");
+        return 1;
+    }
 
     int i, j;
     for (int k = 0; k < width*height; k++)

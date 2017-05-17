@@ -1,24 +1,24 @@
-__kernel void diffusion(__global float* old_temp, __global float* new_temp, __global int height, __global int length, __global float diff_const)
+__kernel void diffusion(__global float* old_temp, __global float* new_temp, int h, int l, float diff_const)
 {
-    int i = get_global_id(0) / width;
-    int j = i % width;
-    float element = 0.;
+    int i = get_global_id(0) / l;
+    int j = get_global_id(0) % l;
+    float element = 0;
 
     if(i == 0){
-        element += 2*old_temp[(i+1)*length + j];
-    }elseif(i == height-1){
-        element += old_temp[(i-1)*length + j];
+        element += 2*old_temp[(i+1)*l + j];
+    }else if(i == h-1){
+        element += old_temp[(i-1)*l + j];
     }else{
-        element += old_temp[(i+1)*length + j] + old_temp[(i-1)*legnth + j];
+        element += old_temp[(i+1)*l + j] + old_temp[(i-1)*l + j];
     }
 
     if(j == 0){
-        element += 2*old_temp[i*length + j+1];
-    }elseif(j == length-1){
-        element += old_temp[i*legnth + j-1];
+        element += 2*old_temp[i*l + j+1];
+    }else if(j == l-1){
+        element += old_temp[i*l + j-1];
     }else{
-        element += old_temp[i*length + j+1] + old_temp[i*length + j-1];
+        element += old_temp[i*l + j+1] + old_temp[i*l + j-1];
     }
     
-    new_temp[i*length + j] = old_temp[i*length + j] + diff_const * (element/4 - old_temp[i*length + j]);
+    new_temp[i*l + j] = old_temp[i*l + j] + diff_const * (element/4 - old_temp[i*l + j]);
 }
