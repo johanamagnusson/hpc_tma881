@@ -54,8 +54,8 @@ float aveCalc(float *new, int w, int h)
     int i;
     int sum = 0;
     float average;
-    int halfw = w/2;
-    int halfh = h/2;
+    int halfw = (int) ((float) w/2.0 + 0.5);
+    int halfh = (int) ((float) h/2.0 + 0.5);
     int toMuch1, toMuch2;
     
     if((w%2 == 0) && (h%2 == 0)){
@@ -307,19 +307,23 @@ int main(int argc, char **argv)
 
     average = aveCalc(new, fullWidth, fullHeight);    
     
+    
+
     for(i = 0; i < width*height; i++){
         new[i] = fabs(new[i]-average);
     }
 
+    
     standDiv = aveCalc(new, fullWidth, fullHeight);
 
-    /*
-    int i, j;
+    
+    //printf("Standard deviation : %05.2f\n", standDiv);
+    
     for (int k = 0; k < width*height; k++)
     {   
         printf("%le\n", new[k]);
     }
-    */
+    
 
     printf("Average            : %05.2f\n", average);
     printf("Standard deviation : %05.2f\n", standDiv);
