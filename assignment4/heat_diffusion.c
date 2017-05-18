@@ -280,7 +280,7 @@ int main(int argc, char **argv)
     //size_t global_item_size = width * height;
     //size_t local_item_size = 1;
 
-    const size_t global[] = {width, height}
+    const size_t global[] = {height, width};
 
     for (i = 0; i < iterations; i++)
     {
@@ -298,7 +298,7 @@ int main(int argc, char **argv)
         //error = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL,
         //        &global_item_size, &local_item_size, 0, NULL, NULL);
         error = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL,
-                (const size_t *)&global, 0, NULL, NULL);
+                (const size_t *)&global, NULL, 0, NULL, NULL);
         if (error != CL_SUCCESS) {
             printf("cannot run kernel \n");
             return 1;
@@ -329,7 +329,6 @@ int main(int argc, char **argv)
     }
 
     error = clFinish(command_queue);
-    /*
     float average;
     float standDiv;
     
@@ -338,14 +337,12 @@ int main(int argc, char **argv)
     float diff;
     for(i = 0; i < width*height; ++i){
         diff = new[i] - average;
-        //printf("%05.2f\n", diff);
         new[i] = fabsf(diff);
     }
     standDiv = aveCalc(new, fullWidth, fullHeight);
 
-    printf("Average            : %05.2e\n", average);
-    printf("Standard deviation : %05.2e\n", standDiv);
-    */
+    printf("Average            : %05.5e\n", average);
+    printf("Standard deviation : %05.5e\n", standDiv);
 
     clReleaseContext(context);
     clReleaseCommandQueue(command_queue);
