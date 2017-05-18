@@ -51,67 +51,34 @@ struct argp argp = { options, parse_opt, 0, 0 };
 
 float aveCalc(float *new, int w, int h)
 {
-    int i;
+    int i, j ,k;
     float sum = 0.0;
     float average;
-    int halfw = (int) ((float) w/2.0 + 0.6);
-    int halfh = (int) ((float) h/2.0 + 0.6);
-    float toMuch1 = 0.0;
-    float toMuch2 = 0.0;
     float denom;
-    
-    if((w%2 == 0) && (h%2 == 0)){
-        for(i = 0; i < halfw*halfh ; i++){
-            sum += new[i];
-        }
-        sum = sum*4.0;
-    }else if((w%2 == 0) && (h%2 == 1)){
-        for(i = 0; i < halfw*halfh ; i++){
-            sum += new[i];
-        }
-        for(i = 0; i < halfw; i++){
-            toMuch1 += new[i];
-        }
-        sum = sum*4.0;
-        sum = sum - 2.0*toMuch1;
-    }else if((w%2 == 1) && (h%2 == 0)){
-        for(i = 0; i < halfw*halfh ; i++){
-            sum += new[i];
-        }
-        for(i = 0; i < halfh; i++){
-            toMuch1 += new[i*halfw];
-        }
-        sum = sum*4.0;
-        sum = sum - 2.0*toMuch1;
-    }else{
-        for(i = 0; i < halfw*halfh ; i++){
-            sum += new[i];
-        }
-        for(i = 0; i < halfw; i++){
-            toMuch1 += new[i];
-        }
-        for(i = 0; i < halfh; i++){
-            toMuch2 += new[i*halfw];
-        }
-        sum = sum*4.0;
-        sum = sum - 2.0*toMuch1 - 2.0*toMuch2 + new[0];
+
+    for (k = 0; k < w * h; k++) {
+        i = k % w;
+        j = k / w;
+        if (i == 0 || i == (w-1) || j == 0 || j == (h-1))
+            ;
+        else
+            sum += new[k];
     }
-    denom = (float) (w * h);
+    denom = (float) ((w-2) * (h-2));
     average = sum/denom;
     return average;
 }
-
 
 
 int main(int argc, char **argv)
 {   
     int         width;
     int         height;
-    int         fullWidth;
-    int         fullHeight;
+    int         wOff;
+    int         hOff;
     float       initCentValue;
     float       diffusionConst;
-    int         iterations, i;
+    int         iterations, i, j;
     struct      arguments arguments;
 
     /* OpenCL requirements */
@@ -155,10 +122,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    fullWidth  = atoi(argv[1]);
-    fullHeight = atoi(argv[2]);
-    width = (int) ((float) fullWidth / 2.0 + 0.6);
-    height = (int) ((float) fullHeight / 2.0 + 0.6);
+    width  = atoi(argv[1]);
+    height = atoi(argv[2]);
+    wOff = width + 2;
+    hOff = height + 2;
 
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
 
@@ -174,47 +141,37 @@ int main(int argc, char **argv)
     printf("Number of iterations  : %d\n", iterations);
     */
     /* Create buffers and allocate memory */
-    float *new = (float *) calloc(width * height, sizeof(float));
-    float *old = (float *) calloc(width * height, sizeof(float));
+    float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
+    float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
 
-    char *kernelString;
-    if (fullWidth % 2 == 0 && fullHeight % 2 == 0) {
-        kernelString = "diffusion_both_even";
-        old[0] = initCentValue / 4.0;
-    } else if (fullWidth % 2 == 0 && fullHeight % 2 != 0) {
-        kernelString = "diffusion_height_uneven_length_even";
-        old[0] = initCentValue / 2.0;
-    } else if (fullWidth % 2 != 0 && fullHeight % 2 == 0) {
-        kernelString = "diffusion_height_even_length_uneven";
-        old[0] = initCentValue / 2.0;
+    if (height % 2 == 0) {
+        old[((width+2) * (height+2) / 2) + width / 2] = initCentValue;
     } else {
-        kernelString = "diffusion_both_uneven";
-        old[0] = initCentValue;
+        old[((width+2) * (height+2) / 2)] = initCentValue;
     }
-
 
     cl_mem buffer_new, buffer_old;
     buffer_new = clCreateBuffer(context, CL_MEM_READ_WRITE,
-            width * height * sizeof(float), NULL, &error);
+            (width+2) * (height+2) * sizeof(float), NULL, &error);
     if (error != CL_SUCCESS) {
         printf("cannot create buffer\n");
         return 1;
     }
     buffer_old = clCreateBuffer(context, CL_MEM_READ_WRITE,
-            width * height * sizeof(float), NULL, &error);
+            (width+2) * (height+2) * sizeof(float), NULL, &error);
     if (error != CL_SUCCESS) {
         printf("cannot create buffer\n");
         return 1;
     }
 
     error = clEnqueueWriteBuffer(command_queue, buffer_new, CL_TRUE, 0,
-            width * height * sizeof(float), new, 0, NULL, NULL);
+            (width+2) * (height+2) * sizeof(float), new, 0, NULL, NULL);
     if (error != CL_SUCCESS) {
         printf("cannot write to buffer\n");
         return 1;
     }
     error = clEnqueueWriteBuffer(command_queue, buffer_old, CL_TRUE, 0,
-            width * height * sizeof(float), old, 0, NULL, NULL);
+            (width+2) * (height+2) * sizeof(float), old, 0, NULL, NULL);
     if (error != CL_SUCCESS) {
         printf("cannot write to buffer \n");
         return 1;
@@ -249,24 +206,14 @@ int main(int argc, char **argv)
     }
 
 
-    kernel = clCreateKernel(program, kernelString, &error);
+    kernel = clCreateKernel(program, "diffusion", &error);
 
-    error = clSetKernelArg(kernel , 0 , sizeof(cl_mem) , (void *)&buffer_old);
-    if (error != CL_SUCCESS) {
-        printf("cannot set argument 0 \n");
-        return 1;
-    }
-    error = clSetKernelArg(kernel , 1 , sizeof(cl_mem) , (void *)&buffer_new);
-    if (error != CL_SUCCESS) {
-        printf("cannot set argument 1 \n");
-        return 1;
-    }
-    error = clSetKernelArg(kernel , 2 , sizeof(int)    , &height);
+    error = clSetKernelArg(kernel , 2 , sizeof(int)    , &hOff);
     if (error != CL_SUCCESS) {
         printf("cannot set argument 2 \n");
         return 1;
     }
-    error = clSetKernelArg(kernel , 3 , sizeof(int)    , &width);
+    error = clSetKernelArg(kernel , 3 , sizeof(int)    , &wOff);
     if (error != CL_SUCCESS) {
         printf("cannot set argument 3 \n");
         return 1;
@@ -276,9 +223,6 @@ int main(int argc, char **argv)
         printf("cannot set argument 4 \n");
         return 1;
     }
-    
-    //size_t global_item_size = width * height;
-    //size_t local_item_size = 1;
 
     const size_t global[] = {height, width};
 
@@ -295,8 +239,6 @@ int main(int argc, char **argv)
             return 1;
         }
     
-        //error = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL,
-        //        &global_item_size, &local_item_size, 0, NULL, NULL);
         error = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL,
                 (const size_t *)&global, NULL, 0, NULL, NULL);
         if (error != CL_SUCCESS) {
@@ -314,32 +256,35 @@ int main(int argc, char **argv)
     
     if (i % 2 == 0) {
         error = clEnqueueReadBuffer(command_queue, buffer_old, CL_TRUE, 0,
-                width * height * sizeof(float), new, 0, NULL, NULL);
+                (width+2) * (height+2) * sizeof(float), new, 0, NULL, NULL);
         if (error != CL_SUCCESS) {
             printf("cannot read buffer \n");
             return 1;
         }
     } else {
         error = clEnqueueReadBuffer(command_queue, buffer_new, CL_TRUE, 0,
-                width * height * sizeof(float), new, 0, NULL, NULL);
+                (width+2) * (height+2) * sizeof(float), new, 0, NULL, NULL);
         if (error != CL_SUCCESS) {
             printf("cannot read buffer \n");
             return 1;
         }
     }
 
+    //for (i = 0; i < wOff * hOff; i++)
+    //    printf("%05.5e\n", new[i]);
+
     error = clFinish(command_queue);
     float average;
     float standDiv;
     
-    average = aveCalc(new, fullWidth, fullHeight);    
+    average = aveCalc(new, wOff, hOff);    
 
     float diff;
-    for(i = 0; i < width*height; ++i){
+    for(i = 0; i < (width+2)*(height+2); ++i){
         diff = new[i] - average;
         new[i] = fabsf(diff);
     }
-    standDiv = aveCalc(new, fullWidth, fullHeight);
+    standDiv = aveCalc(new, wOff, hOff);
 
     printf("Average            : %05.5e\n", average);
     printf("Standard deviation : %05.5e\n", standDiv);
