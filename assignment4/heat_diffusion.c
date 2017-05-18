@@ -49,6 +49,58 @@ struct argp_option options[] =
 
 struct argp argp = { options, parse_opt, 0, 0 };
 
+float aveCalc(float *new, int w, int h)
+{
+    int i;
+    int sum = 0;
+    float average;
+    int halfw = w/2;
+    int halfh = h/2;
+    int toMuch1, toMuch2;
+    
+    if((w%2 == 0) && (h%2 == 0)){
+        for(i = 0; i < halfw*halfh ; i++){
+            sum += new[i];
+        }
+        sum = sum*4;
+    }else if((w%2 == 0) && (h%2 == 1)){
+        for(i = 0; i < halfw*halfh ; i++){
+            sum += new[i];
+        }
+        for(i = 0; i < halfw; i++){
+            toMuch1 += new[i];
+        }
+        sum = sum*4;
+        sum = sum - 2*toMuch1;
+    }else if((w%2 == 1) && (h%2 == 0)){
+        for(i = 0; i < halfw*halfh ; i++){
+            sum += new[i];
+        }
+        for(i = 0; i < halfh; i++){
+            toMuch1 += new[i*halfw];
+        }
+        sum = sum*4;
+        sum = sum - 2*toMuch1;
+    }else{
+        for(i = 0; i < halfw*halfh ; i++){
+            sum += new[i];
+        }
+        for(i = 0; i < halfw; i++){
+            toMuch1 += new[i];
+        }
+        for(i = 0; i < halfh; i++){
+            toMuch2 += new[i*halfw];
+        }
+        sum = sum*4;
+        sum = sum - 2*toMuch1 - 2*toMuch2 + new[0];
+    }
+    
+    average = sum/(w*h);
+    return average;
+}
+
+
+
 int main(int argc, char **argv)
 {   
     int         width;
@@ -112,27 +164,29 @@ int main(int argc, char **argv)
     diffusionConst = arguments.d;
     iterations     = arguments.n;
     
+    /*
     printf("Width                 : %d\n", width);
     printf("Height                : %d\n", height);
     printf("Initial central value : %le\n", initCentValue);
     printf("Diffusion constant    : %.2f\n", diffusionConst);
     printf("Number of iterations  : %d\n", iterations);
-
+    */
     /* Create buffers and allocate memory */
     float *new = (float *) calloc(width * height, sizeof(float));
     float *old = (float *) calloc(width * height, sizeof(float));
 
+    char *kernelString;
     if (fullWidth % 2 == 0 && fullHeight % 2 == 0) {
-        char kernelString[] = "diffusion_both_even";
+        kernelString = "diffusion_both_even";
         old[0] = initCentValue / 4.0;
     } else if (fullWidth % 2 == 0 && fullHeight % 2 != 0) {
-        char kernelString[] = "diffusion_height_uneven_length_even";
+        kernelString = "diffusion_height_uneven_length_even";
         old[0] = initCentValue / 2.0;
     } else if (fullWidth % 2 != 0 && fullHeight % 2 == 0) {
-        char kernelString[] = "diffusion_height_even_length_uneven";
+        kernelString = "diffusion_height_even_length_uneven";
         old[0] = initCentValue / 2.0;
     } else {
-        char kernelString[] = "diffusion_both_uneven";
+        kernelString = "diffusion_both_uneven";
         old[0] = initCentValue;
     }
 
@@ -248,6 +302,27 @@ int main(int argc, char **argv)
         printf("cannot read buffer \n");
         return 1;
     }
+
+    float average, standDiv; 
+
+    average = aveCalc(new, fullWidth, fullHeight);    
+    
+    for(i = 0; i < width*height; i++){
+        new[i] = fabs(new[i]-average);
+    }
+
+    standDiv = aveCalc(new, fullWidth, fullHeight);
+
+    /*
+    int i, j;
+    for (int k = 0; k < width*height; k++)
+    {   
+        printf("%le\n", new[k]);
+    }
+    */
+
+    printf("Average            : %05.2f\n", average);
+    printf("Standard deviation : %05.2f\n", standDiv);
 
     clReleaseContext(context);
     clReleaseCommandQueue(command_queue);
