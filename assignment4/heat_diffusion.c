@@ -51,18 +51,13 @@ struct argp argp = { options, parse_opt, 0, 0 };
 
 float aveCalc(float *new, int w, int h)
 {
-    int i, j ,k;
+    int k;
     float sum = 0.0;
     float average;
     float denom;
 
     for (k = 0; k < w * h; k++) {
-        i = k % w;
-        j = k / w;
-        if (i == 0 || i == (w-1) || j == 0 || j == (h-1))
-            ;
-        else
-            sum += new[k];
+        sum += new[k];
     }
     denom = (float) ((w-2) * (h-2));
     average = sum/denom;
@@ -78,7 +73,7 @@ int main(int argc, char **argv)
     int         hOff;
     float       initCentValue;
     float       diffusionConst;
-    int         iterations, i, j;
+    int         iterations, i, j, k;
     struct      arguments arguments;
 
     /* OpenCL requirements */
@@ -270,22 +265,36 @@ int main(int argc, char **argv)
         }
     }
 
-    //for (i = 0; i < wOff * hOff; i++)
-    //    printf("%05.5e\n", new[i]);
 
     error = clFinish(command_queue);
+    /*
+    for (k = 0; k < wOff * hOff; k++) {
+        i = k % wOff;
+        j = k / wOff;
+        if (i == 0 || i == (hOff-1) || j == 0 || j == (wOff-1)) {
+            if (new[k] > 0.0)
+                printf("%05.5e\n", new[k]);
+        }
+    }
+    */
     float average;
     float standDiv;
     
     average = aveCalc(new, wOff, hOff);    
 
     float diff;
-    for(i = 0; i < (width+2)*(height+2); ++i){
-        diff = new[i] - average;
-        new[i] = fabsf(diff);
+    for(k = 0; k < (width+2)*(height+2); ++k){
+        i = k % wOff;
+        j = k / wOff;
+        if (i == 0 || i == (wOff-1) || j == 0 || j == (hOff-1)) {
+            ;
+        } else {
+            diff = average - new[k];
+            new[k] = sqrtf(diff * diff);
+        }
     }
     standDiv = aveCalc(new, wOff, hOff);
-
+    
     printf("Average            : %05.5e\n", average);
     printf("Standard deviation : %05.5e\n", standDiv);
 
