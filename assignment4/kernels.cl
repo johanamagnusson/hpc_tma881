@@ -25,8 +25,8 @@ __kernel void diffusion_both_uneven(__global float* old_temp, __global float* ne
 
 __kernel void diffusion_both_even(__global float* old_temp, __global float* new_temp, int h, int l, float diff_const)
 {
-    int i = get_global_id(0) / l;
-    int j = get_global_id(0) % l;
+    int i = get_global_id(0);
+    int j = get_global_id(1);
     float element = 0;
 
     if(i == 0){
@@ -49,8 +49,8 @@ __kernel void diffusion_both_even(__global float* old_temp, __global float* new_
 }
 __kernel void diffusion_height_uneven_lenght_eaven(__global float* old_temp, __global float* new_temp, int h, int l, float diff_const)
 {
-    int i = get_global_id(0) / l;
-    int j = get_global_id(0) % l;
+    int i = get_global_id(0);
+    int j = get_global_id(1);
     float element = 0;
 
     if(i == 0){
@@ -76,8 +76,8 @@ __kernel void diffusion_height_uneven_lenght_eaven(__global float* old_temp, __g
 
 __kernel void diffusion_height_even_length_uneaven(__global float* old_temp, __global float* new_temp, int h, int l, float diff_const)
 {
-    int i = get_global_id(0) / l;
-    int j = get_global_id(0) % l;
+    int i = get_global_id(0);
+    int j = get_global_id(1);
     float element = 0;
 
     if(i == 0){
