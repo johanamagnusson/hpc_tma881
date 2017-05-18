@@ -49,6 +49,58 @@ struct argp_option options[] =
 
 struct argp argp = { options, parse_opt, 0, 0 };
 
+float aveCalc(float *new, int w, int h)
+{
+    int i;
+    int sum = 0;
+    float average;
+    int halfw = w/2;
+    int halfh = h/2;
+    int toMuch1, toMuch2;
+    
+    if((w%2 == 0) && (h%2 == 0)){
+        for(i = 0; i < halfw*halfh ; i++){
+            sum += new[i];
+        }
+        sum = sum*4;
+    }else if((w%2 == 0) && (h%2 == 1)){
+        for(i = 0; i < halfw*halfh ; i++){
+            sum += new[i];
+        }
+        for(i = 0; i < halfw; i++){
+            toMuch1 += new[i];
+        }
+        sum = sum*4;
+        sum = sum - 2*toMuch1;
+    }else if((w%2 == 1) && (h%2 == 0)){
+        for(i = 0; i < halfw*halfh ; i++){
+            sum += new[i];
+        }
+        for(i = 0; i < halfh; i++){
+            toMuch1 += new[i*halfw];
+        }
+        sum = sum*4;
+        sum = sum - 2*toMuch1;
+    }else{
+        for(i = 0; i < halfw*halfh ; i++){
+            sum += new[i];
+        }
+        for(i = 0; i < halfw; i++){
+            toMuch1 += new[i];
+        }
+        for(i = 0; i < halfh; i++){
+            toMuch2 += new[i*halfw];
+        }
+        sum = sum*4;
+        sum = sum - 2*toMuch1 - 2*toMuch2 + new[0];
+    }
+    
+    average = sum/(w*h);
+    return average;
+}
+
+
+
 int main(int argc, char **argv)
 {   
     int         width;
@@ -223,6 +275,17 @@ int main(int argc, char **argv)
         printf("cannot read buffer \n");
         return 1;
     }
+
+    float average, standDiv; 
+
+    average = aveCalc(new, fullWidth, fullHeight);    
+    
+    for(int i = 0; i < width*height; i++){
+        new[i] = fabs(new[i]-average);
+    }
+
+    standDiv = aveCalc(new, fullWidth, fullHeight);
+
 
     int i, j;
     for (int k = 0; k < width*height; k++)
