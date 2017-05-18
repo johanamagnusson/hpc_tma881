@@ -1,7 +1,7 @@
 __kernel void diffusion_both_uneven(__global float* old_temp, __global float* new_temp, int h, int l, float diff_const)
 {
-    int i = get_global_id(0) / l;
-    int j = get_global_id(0) % l;
+    int i = get_global_id(0);
+    int j = get_global_id(1);
     float element = 0;
 
     if(i == 0){
