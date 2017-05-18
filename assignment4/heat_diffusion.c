@@ -52,15 +52,15 @@ struct argp argp = { options, parse_opt, 0, 0 };
 float aveCalc(float *new, int w, int h)
 {
     int k;
-    float sum = 0.0;
+    double sum = 0.0;
     float average;
-    float denom;
+    double denom;
 
     for (k = 0; k < w * h; k++) {
         sum += new[k];
     }
-    denom = (float) ((w-2) * (h-2));
-    average = sum/denom;
+    denom = (double) ((w-2) * (h-2));
+    average = (float) (sum/denom);
     return average;
 }
 
