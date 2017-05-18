@@ -277,8 +277,10 @@ int main(int argc, char **argv)
         return 1;
     }
     
-    size_t global_item_size = width * height;
-    size_t local_item_size = 1;
+    //size_t global_item_size = width * height;
+    //size_t local_item_size = 1;
+
+    const size_t global[] = {width, height}
 
     for (i = 0; i < iterations; i++)
     {
@@ -293,8 +295,10 @@ int main(int argc, char **argv)
             return 1;
         }
     
-        error = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
-                &global_item_size, &local_item_size, 0, NULL, NULL);
+        //error = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL,
+        //        &global_item_size, &local_item_size, 0, NULL, NULL);
+        error = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL,
+                (const size_t *)&global, 0, NULL, NULL);
         if (error != CL_SUCCESS) {
             printf("cannot run kernel \n");
             return 1;
