@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     int         fullHeight;
     float       initCentValue;
     float       diffusionConst;
-    int         iterations;
+    int         iterations, i;
     struct      arguments arguments;
 
     /* OpenCL requirements */
@@ -103,8 +103,8 @@ int main(int argc, char **argv)
 
     fullWidth  = atoi(argv[1]);
     fullHeight = atoi(argv[2]);
-    width = fullWidth / 2;
-    height = fullHeight / 2;
+    width = (int) ((float) fullWidth / 2.0 + 0.5);
+    height = (int) ((float) fullHeight / 2.0 + 0.5);
 
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
 
@@ -122,7 +122,20 @@ int main(int argc, char **argv)
     float *new = (float *) calloc(width * height, sizeof(float));
     float *old = (float *) calloc(width * height, sizeof(float));
 
-    old[0] = initCentValue;
+    if (fullWidth % 2 == 0 && fullHeight % 2 == 0) {
+        char kernelString[] = "diffusion_both_even";
+        old[0] = initCentValue / 4.0;
+    } else if (fullWidth % 2 == 0 && fullHeight % 2 != 0) {
+        char kernelString[] = "diffusion_height_uneven_length_even";
+        old[0] = initCentValue / 2.0;
+    } else if (fullWidth % 2 != 0 && fullHeight % 2 == 0) {
+        char kernelString[] = "diffusion_height_even_length_uneven";
+        old[0] = initCentValue / 2.0;
+    } else {
+        char kernelString[] = "diffusion_both_uneven";
+        old[0] = initCentValue;
+    }
+
 
     cl_mem buffer_new, buffer_old;
     buffer_new = clCreateBuffer(context, CL_MEM_READ_WRITE,
@@ -179,7 +192,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    kernel = clCreateKernel(program, "diffusion", &error);
+
+    kernel = clCreateKernel(program, kernelString, &error);
 
     error = clSetKernelArg(kernel , 0 , sizeof(cl_mem) , (void *)&buffer_old);
     if (error != CL_SUCCESS) {
@@ -210,11 +224,22 @@ int main(int argc, char **argv)
     size_t global_item_size = width * height;
     size_t local_item_size = 1;
 
-    error = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
-            &global_item_size, &local_item_size, 0, NULL, NULL);
-    if (error != CL_SUCCESS) {
-        printf("cannot run kernel \n");
-        return 1;
+    for (i = 0; i < iterations; i++)
+    {
+        error = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
+                &global_item_size, &local_item_size, 0, NULL, NULL);
+        if (error != CL_SUCCESS) {
+            printf("cannot run kernel \n");
+            return 1;
+        }
+
+        error = clEnqueueCopyBuffer(
+                command_queue,
+                buffer_new,
+                buffer_old,
+                0, 0,
+                width * height * sizeof(float),
+                0, NULL, NULL);
     }
 
     error = clEnqueueReadBuffer(command_queue, buffer_new, CL_TRUE, 0,
@@ -222,12 +247,6 @@ int main(int argc, char **argv)
     if (error != CL_SUCCESS) {
         printf("cannot read buffer \n");
         return 1;
-    }
-
-    int i, j;
-    for (int k = 0; k < width*height; k++)
-    {   
-        printf("%le\n", new[k]);
     }
 
     clReleaseContext(context);
