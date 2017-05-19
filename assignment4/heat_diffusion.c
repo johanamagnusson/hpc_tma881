@@ -121,7 +121,8 @@ int main(int argc, char **argv)
     const size_t heightOld = atoi(argv[2]);
     const size_t wOff = widthOld + 2;
     const size_t hOff = heightOld + 2;
-
+    size_t width;
+    size_t height;
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
 
     initCentValue  = arguments.i;
@@ -137,29 +138,24 @@ int main(int argc, char **argv)
     */
     /* Create buffers and allocate memory */
 
-    if ((iteration > heightOld) && (iterations > widthOld)) {
-        const size_t width = widthOld;
-        const size_t height = heightOld;
-        float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
-        float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
+    if ((iterations > heightOld) && (iterations > widthOld)) {
+        width = widthOld;
+        height = heightOld;
     } else if ((iterations < heightOld) && (iterations < widthOld)) {
-        const size_t width = iterations+1;
-        const size_t height = iterations+1;
-        float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
-        float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
+        width = iterations+1;
+        height = iterations+1;
     } else {
         if (heightOld < widthOld) {
-            const size_t width = iterations+1;
-            const size_t heigth = heigthOld;
-            float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
-            float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
+            width = iterations+1;
+            height = heightOld;
         } else {
-            const size_t width = widthOld;
-            const size_t height = iterations+1;
-            float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
-            float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
+            width = widthOld;
+            height = iterations+1;
         }
     }
+
+    float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
+    float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
 
     if (height % 2 == 0) {
         old[((width+2) * (height+2) / 2) + width / 2] = initCentValue;
@@ -297,7 +293,7 @@ int main(int argc, char **argv)
             new[k] = sqrtf(diff * diff);
         }
     }
-    standDiv = aveCalc(new, wOff, hOff, widthOld, heigthOld);
+    standDiv = aveCalc(new, wOff, hOff, widthOld, heightOld);
     
     printf("Average            : %05.5e\n", average);
     printf("Standard deviation : %05.5e\n", standDiv);
