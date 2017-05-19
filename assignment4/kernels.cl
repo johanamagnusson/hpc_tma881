@@ -5,8 +5,7 @@ __kernel void diffusion(__global float* old_temp, __global float* new_temp, int 
     float element = 0;
     int itl = i*l;
 
-    element += old_temp[itl+l + j] + old_temp[itl-l + j];
-    element += old_temp[itl + j+1] + old_temp[itl + j-1];
+    element += old_temp[itl + j+1] + old_temp[itl + j-1] + old_temp[itl+l + j] + old_temp[itl-l + j];
     
     new_temp[itl + j] = old_temp[itl + j] + diff_const * (element * 0.25 - old_temp[itl + j]);
 }
