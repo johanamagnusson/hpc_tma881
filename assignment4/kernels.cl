@@ -20,7 +20,7 @@ __kernel void diffusion_both_uneven(__global float* old_temp, __global float* ne
         element += old_temp[i*l + j+1] + old_temp[i*l + j-1];
     }
     
-    new_temp[i*l + j] = old_temp[i*l + j] + diff_const * (element/4 - old_temp[i*l + j]);
+    new_temp[i*l + j] = old_temp[i*l + j] + diff_const * (element*0.25 - old_temp[i*l + j]);
 }
 
 __kernel void diffusion_both_even(__global float* old_temp, __global float* new_temp, int h, int l, float diff_const)
@@ -46,7 +46,7 @@ __kernel void diffusion_both_even(__global float* old_temp, __global float* new_
         element += old_temp[itl + j+1] + old_temp[itl + j-1];
     }
     
-    new_temp[itl + j] = old_temp[itl + j] + diff_const * (element/4 - old_temp[itl + j]);
+    new_temp[itl + j] = old_temp[itl + j] + diff_const * (element*0.25 - old_temp[itl + j]);
 }
 __kernel void diffusion_height_uneven_lenght_eaven(__global float* old_temp, __global float* new_temp, int h, int l, float diff_const)
 {
@@ -70,7 +70,7 @@ __kernel void diffusion_height_uneven_lenght_eaven(__global float* old_temp, __g
         element += old_temp[i*l + j+1] + old_temp[i*l + j-1];
     }
     
-    new_temp[i*l + j] = old_temp[i*l + j] + diff_const * (element/4 - old_temp[i*l + j]);
+    new_temp[i*l + j] = old_temp[i*l + j] + diff_const * (element*0.25 - old_temp[i*l + j]);
 }
 
 
@@ -97,5 +97,5 @@ __kernel void diffusion_height_even_length_uneaven(__global float* old_temp, __g
         element += old_temp[i*l + j+1] + old_temp[i*l + j-1];
     }
     
-    new_temp[i*l + j] = old_temp[i*l + j] + diff_const * (element/4 - old_temp[i*l + j]);
+    new_temp[i*l + j] = old_temp[i*l + j] + diff_const * (element*0.25 - old_temp[i*l + j]);
 }
