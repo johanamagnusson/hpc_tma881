@@ -67,13 +67,13 @@ float aveCalc(float *new, int w, int h)
 
 int main(int argc, char **argv)
 {   
-    int         width;
-    int         height;
-    int         wOff;
-    int         hOff;
+    //int         width;
+    //int         height;
+    //int         wOff;
+    //int         hOff;
     float       initCentValue;
     float       diffusionConst;
-    int         iterations, i, j, k;
+    size_t      iterations, i, j, k;
     struct      arguments arguments;
 
     /* OpenCL requirements */
@@ -117,10 +117,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    width  = atoi(argv[1]);
-    height = atoi(argv[2]);
-    wOff = width + 2;
-    hOff = height + 2;
+    const size_t width  = atoi(argv[1]);
+    const size_t height = atoi(argv[2]);
+    const size_t wOff = width + 2;
+    const size_t hOff = height + 2;
 
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
 
@@ -203,17 +203,17 @@ int main(int argc, char **argv)
 
     kernel = clCreateKernel(program, "diffusion", &error);
 
-    error = clSetKernelArg(kernel , 2 , sizeof(int)    , &hOff);
-    if (error != CL_SUCCESS) {
-        printf("cannot set argument 2 \n");
-        return 1;
-    }
-    error = clSetKernelArg(kernel , 3 , sizeof(int)    , &wOff);
+    //error = clSetKernelArg(kernel , 2 , sizeof(int)    , &hOff);
+    //if (error != CL_SUCCESS) {
+    //    printf("cannot set argument 2 \n");
+    //    return 1;
+    //}
+    error = clSetKernelArg(kernel , 2 , sizeof(int)    , &wOff);
     if (error != CL_SUCCESS) {
         printf("cannot set argument 3 \n");
         return 1;
     }
-    error = clSetKernelArg(kernel , 4 , sizeof(float)  , &diffusionConst);
+    error = clSetKernelArg(kernel , 3 , sizeof(float)  , &diffusionConst);
     if (error != CL_SUCCESS) {
         printf("cannot set argument 4 \n");
         return 1;
@@ -224,31 +224,14 @@ int main(int argc, char **argv)
     for (i = 0; i < iterations; i++)
     {
         error = clSetKernelArg(kernel , i % 2, sizeof(cl_mem) , (void *)&buffer_old);
-        if (error != CL_SUCCESS) {
-            printf("cannot set argument 0 \n");
-            return 1;
-        }
         error = clSetKernelArg(kernel , (i+1) % 2 , sizeof(cl_mem) , (void *)&buffer_new);
-        if (error != CL_SUCCESS) {
-            printf("cannot set argument 1 \n");
-            return 1;
-        }
     
         error = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL,
                 (const size_t *)&global, NULL, 0, NULL, NULL);
-        if (error != CL_SUCCESS) {
-            printf("cannot run kernel \n");
-            return 1;
-        }
 
-        error = clFinish(command_queue);
-        if (error != CL_SUCCESS) {
-            printf("Finish error \n");
-            return 1;
-        }
+        //error = clFinish(command_queue);
 
     }
-    
     if (i % 2 == 0) {
         error = clEnqueueReadBuffer(command_queue, buffer_old, CL_TRUE, 0,
                 (width+2) * (height+2) * sizeof(float), new, 0, NULL, NULL);
@@ -264,7 +247,6 @@ int main(int argc, char **argv)
             return 1;
         }
     }
-
 
     error = clFinish(command_queue);
     /*
