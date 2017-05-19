@@ -49,7 +49,7 @@ struct argp_option options[] =
 
 struct argp argp = { options, parse_opt, 0, 0 };
 
-float aveCalc(float *new, int w, int h)
+float aveCalc(float *new, int w, int h, int fullW, int fullH)
 {
     int k;
     double sum = 0.0;
@@ -59,7 +59,7 @@ float aveCalc(float *new, int w, int h)
     for (k = 0; k < w * h; k++) {
         sum += new[k];
     }
-    denom = (double) ((w-2) * (h-2));
+    denom = (double) ((fullW) * (fullH));
     average = (float) (sum/denom);
     return average;
 }
@@ -117,10 +117,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    const size_t width  = atoi(argv[1]);
-    const size_t height = atoi(argv[2]);
-    const size_t wOff = width + 2;
-    const size_t hOff = height + 2;
+    const size_t widthOld  = atoi(argv[1]);
+    const size_t heightOld = atoi(argv[2]);
+    const size_t wOff = widthOld + 2;
+    const size_t hOff = heightOld + 2;
 
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
 
@@ -136,8 +136,30 @@ int main(int argc, char **argv)
     printf("Number of iterations  : %d\n", iterations);
     */
     /* Create buffers and allocate memory */
-    float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
-    float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
+
+    if ((iteration > heightOld) && (iterations > widthOld)) {
+        const size_t width = widthOld;
+        const size_t height = heightOld;
+        float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
+        float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
+    } else if ((iterations < heightOld) && (iterations < widthOld)) {
+        const size_t width = iterations+1;
+        const size_t height = iterations+1;
+        float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
+        float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
+    } else {
+        if (heightOld < widthOld) {
+            const size_t width = iterations+1;
+            const size_t heigth = heigthOld;
+            float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
+            float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
+        } else {
+            const size_t width = widthOld;
+            const size_t height = iterations+1;
+            float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
+            float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
+        }
+    }
 
     if (height % 2 == 0) {
         old[((width+2) * (height+2) / 2) + width / 2] = initCentValue;
@@ -262,7 +284,7 @@ int main(int argc, char **argv)
     float average;
     float standDiv;
     
-    average = aveCalc(new, wOff, hOff);    
+    average = aveCalc(new, wOff, hOff, widthOld, heightOld);    
 
     float diff;
     for(k = 0; k < (width+2)*(height+2); ++k){
@@ -275,7 +297,7 @@ int main(int argc, char **argv)
             new[k] = sqrtf(diff * diff);
         }
     }
-    standDiv = aveCalc(new, wOff, hOff);
+    standDiv = aveCalc(new, wOff, hOff, widthOld, heigthOld);
     
     printf("Average            : %05.5e\n", average);
     printf("Standard deviation : %05.5e\n", standDiv);
