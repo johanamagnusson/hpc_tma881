@@ -28,6 +28,7 @@ parse_opt(int key, char *arg,
         case 'd':
             {
                 arguments -> d = atof(arg);
+
                 break;
             }
         case 'n':
@@ -49,7 +50,7 @@ struct argp_option options[] =
 
 struct argp argp = { options, parse_opt, 0, 0 };
 
-float aveCalc(float *new, int w, int h, int fullW, int fullH)
+float aveCalc(float *new, int w, int h, int fullW, int fullH, int check)
 {
     int k;
     double sum = 0.0;
@@ -61,6 +62,10 @@ float aveCalc(float *new, int w, int h, int fullW, int fullH)
     }
     denom = (double) ((fullW) * (fullH));
     average = (float) (sum/denom);
+    if (check == 1) {
+        sum += average*(fullH*fullW - w*h);
+        average = (float) (sum/denom);
+    }
     return average;
 }
 
@@ -122,7 +127,7 @@ int main(int argc, char **argv)
     size_t width;
     size_t height;
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
-
+    size_t check;
     initCentValue  = arguments.i;
     diffusionConst = arguments.d;
     iterations     = arguments.n;
@@ -139,16 +144,20 @@ int main(int argc, char **argv)
     if ((iterations > heightOld) && (iterations > widthOld)) {
         width = widthOld;
         height = heightOld;
+        check = 0;
     } else if ((iterations < heightOld) && (iterations < widthOld)) {
         width = 2*iterations+1;
         height = 2*iterations+1;
+        check = 1;
     } else {
         if (heightOld < widthOld) {
             width = 2*iterations+1;
             height = heightOld;
+            check = 1;
         } else {
             width = widthOld;
             height = 2*iterations+1;
+            check = 1;
         }
     }
 
@@ -280,7 +289,7 @@ int main(int argc, char **argv)
     float average;
     float standDiv;
     
-    average = aveCalc(new, wOff, hOff, widthOld, heightOld);    
+    average = aveCalc(new, wOff, hOff, widthOld, heightOld, 0);    
 
     float diff;
     for(k = 0; k < (width+2)*(height+2); ++k){
@@ -293,7 +302,7 @@ int main(int argc, char **argv)
             new[k] = sqrtf(diff * diff);
         }
     }
-    standDiv = aveCalc(new, wOff, hOff, widthOld, heightOld);
+    standDiv = aveCalc(new, wOff, hOff, widthOld, heightOld, check);
     
     printf("Average            : %05.5e\n", average);
     printf("Standard deviation : %05.5e\n", standDiv);
