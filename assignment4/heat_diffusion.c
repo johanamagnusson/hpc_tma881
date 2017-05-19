@@ -119,8 +119,6 @@ int main(int argc, char **argv)
 
     const size_t widthOld  = atoi(argv[1]);
     const size_t heightOld = atoi(argv[2]);
-    const size_t wOff = widthOld + 2;
-    const size_t hOff = heightOld + 2;
     size_t width;
     size_t height;
     argp_parse (&argp, argc, argv, 0, 0, &arguments); 
@@ -142,18 +140,20 @@ int main(int argc, char **argv)
         width = widthOld;
         height = heightOld;
     } else if ((iterations < heightOld) && (iterations < widthOld)) {
-        width = iterations+1;
-        height = iterations+1;
+        width = 2*iterations+1;
+        height = 2*iterations+1;
     } else {
         if (heightOld < widthOld) {
-            width = iterations+1;
+            width = 2*iterations+1;
             height = heightOld;
         } else {
             width = widthOld;
-            height = iterations+1;
+            height = 2*iterations+1;
         }
     }
 
+    const size_t wOff = width + 2;
+    const size_t hOff = height + 2;
     float *new = (float *) calloc((width+2) * (height+2), sizeof(float));
     float *old = (float *) calloc((width+2) * (height+2), sizeof(float));
 
