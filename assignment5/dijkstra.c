@@ -4,13 +4,14 @@
 #include <math.h>
 
 
-void printGraph(int **graph, size_t nbrOfPoints, int width)
+void printGraph(int **graph, size_t nbrOfEdges, int width)
 {   
-    size_t i, j;
-    for (i = 0; i < nbrOfPoints; i++)
+    size_t i;
+    for (i = 0; i < nbrOfEdges; i++)
     {
-        for (j = 0; j < nbrOfPoints; j++)
-            printf("%*d ", width, graph[i][j]);
+        printf("%*d ", width, graph[i][0]);
+        printf("%*d ", width, graph[i][1]);
+        printf("%*d ", width, graph[i][2]);
         printf("\n");
     }
 }
@@ -23,7 +24,7 @@ int main(int argc, char **argv)
     char    ch;
     char    lineStr[128];
     int     i1, i2, w;
-    size_t  nbrOfPoints;
+    size_t  nbrOfEdges;
     size_t  nbrOfVertices;
     int     **graph;
     size_t  i;
@@ -34,13 +35,13 @@ int main(int argc, char **argv)
     fileName                 = argv[3];
     
     graphFile = fopen(fileName, "r");
-    nbrOfVertices = 0;
+    nbrOfEdges = 0;
     lineIdx = 0;
     while (ch != EOF)
     {
         ch = fgetc(graphFile);
         if (ch == '\n') {
-            nbrOfVertices++;
+            nbrOfEdges++;
             lineIdx = 0;
         } else {
             lineStr[lineIdx] = ch;
@@ -48,29 +49,28 @@ int main(int argc, char **argv)
         }
     }
     sscanf(lineStr, "%d", &i1);
-    nbrOfPoints = i1 + 1;
+    nbrOfVertices = i1 + 1;
 
-    graph = (int **) malloc(nbrOfPoints * sizeof(int *));
-    for (i = 0; i < nbrOfPoints; i++)
+    graph = (int **) malloc(nbrOfEdges * sizeof(int *));
+    for (i = 0; i < nbrOfEdges; i++)
     {
-        graph[i] = (int *) malloc(nbrOfPoints * sizeof(int));
+        graph[i] = (int *) malloc(3 * sizeof(int));
     }
     
     fseek(graphFile, 0, SEEK_SET);
-    for (i = 0; i < nbrOfVertices; i++)
+    for (i = 0; i < nbrOfEdges; i++)
     {
-        ret = fscanf(graphFile, "%d", &i1);
-        ret = fscanf(graphFile, "%d", &i2);
-        ret = fscanf(graphFile, "%d", &w);
-        graph[i1][i2] = w;
+        ret = fscanf(graphFile, "%d", &graph[i][0]);
+        ret = fscanf(graphFile, "%d", &graph[i][1]);
+        ret = fscanf(graphFile, "%d", &graph[i][2]);
     }
     fclose(graphFile);
 
+    printf("Number of edges    : %lu\n", nbrOfEdges);
     printf("Number of vertices : %lu\n", nbrOfVertices);
-    printf("Number of Points   : %lu\n", nbrOfPoints);
-    printGraph(graph, nbrOfPoints, 2);
+    //printGraph(graph, nbrOfEdges, 2);
     
-    for (i = 0; i < nbrOfPoints; i++)
+    for (i = 0; i < nbrOfEdges; i++)
         free(graph[i]);
 
     return 0;
