@@ -3,20 +3,9 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+#include <mpi.h>
 
 #define INF INT_MAX
-
-void printGraph(int **graph, size_t nbrOfEdges, int width)
-{   
-    size_t i;
-    for (i = 0; i < nbrOfEdges; i++)
-    {
-        printf("%*d ", width, graph[i][0]);
-        printf("%*d ", width, graph[i][1]);
-        printf("%*d ", width, graph[i][2]);
-        printf("\n");
-    }
-}
 
 void dijkstra(
         int **graph,
@@ -95,14 +84,12 @@ void dijkstra(
 
     //return retDist;
 }
+void theOnlyOne(int argc, char **argv)
+{
 
-
-int main(int argc, char **argv)
-{   
     FILE         *graphFile;
     char         *fileName;
     char         ch;
-    //char         lineStr[128];
     int          i1, i2, w;
     size_t       nbrOfEdges;
     size_t       nbrOfVertices;
@@ -114,28 +101,17 @@ int main(int argc, char **argv)
     const size_t source = atoi(argv[1]);
     const size_t target = atoi(argv[2]);
     fileName            = argv[3];
-    
+        
     graphFile = fopen(fileName, "r");
     nbrOfEdges = 0;
-    //lineIdx = 0;
     while (ch != EOF)
     {
         ch = fgetc(graphFile);
         if (ch == '\n') {
             nbrOfEdges++;
-            //lineIdx = 0;
         }
-        /*
-        else {
-            lineStr[lineIdx] = ch;
-            lineIdx++;
-        }
-        */
     }
-    //sscanf(lineStr, "%d", &i1);
-    //nbrOfVertices = i1 + 1;
-    //degree = nbrOfEdges / nbrOfVertices;
-
+    
     graph = (int **) malloc(nbrOfEdges * sizeof(int *));
     for (i = 0; i < nbrOfEdges; i++)
     {
@@ -160,17 +136,92 @@ int main(int argc, char **argv)
             source,
             target
             );
-
-    //printf("Number of edges    : %lu\n", nbrOfEdges);
-    //printf("Number of vertices : %lu\n", nbrOfVertices);
-    //printf("Degree             : %d\n", degree);
-    //printf("Shortest distance  : %d\n", shortestDist);
-    //printGraph(graph, nbrOfEdges, 2);
-    
     
     for (i = 0; i < nbrOfEdges; i++)
         free(graph[i]);
     free(graph);
 
+
+}
+int main(int argc, char **argv)
+{   
+    int myrank, nbr_mpi_proc;
+    MPI_Init(&argc, &argv);   /* initialize MPI */
+    MPI_Comm_rank(MPI_COMM_WORLD,   /* always use this */&myrank);      /* process rank, 0 thru N-1 */
+    MPI_Comm_size(MPI_COMM_WORLD, &nbr_mpi_proc);
+
+    if (nbr_mpi_proc == 1) {
+        theOnlyOne(argc, argv);
+    } else {
+        printf("Number of processes %d:", nbr_mpi_proc);
+        printf("I am your master!");
+        FILE         *graphFile;
+        char         *fileName;
+        char         ch;
+        int          i1, i2, w;
+        size_t       nbrOfEdges;
+        size_t       nbrOfVertices;
+        int          **graph;
+        size_t       i;
+        int          ret, lineIdx, degree;
+        unsigned int shortestDist;
+
+        const size_t source = atoi(argv[1]);
+        const size_t target = atoi(argv[2]);
+        fileName            = argv[3];
+            
+        graphFile = fopen(fileName, "r");
+        nbrOfEdges = 0;
+        while (ch != EOF)
+        {
+            ch = fgetc(graphFile);
+            if (ch == '\n') {
+                nbrOfEdges++;
+            }
+        }
+        if (myrank == 0) { 
+            graph = (int **) malloc(nbrOfEdges * sizeof(int *));
+            for (i = 0; i < nbrOfEdges; i++)
+            {
+                graph[i] = (int *) malloc(3 * sizeof(int));
+            }
+    
+            fseek(graphFile, 0, SEEK_SET);
+            for (i = 0; i < nbrOfEdges; i++)
+            {
+                ret = fscanf(graphFile, "%d", &graph[i][0]);
+                ret = fscanf(graphFile, "%d", &graph[i][1]);
+                ret = fscanf(graphFile, "%d", &graph[i][2]);
+            }
+            fclose(graphFile);
+            nbrOfVertices = graph[nbrOfEdges-1][0] + 1;
+            degree = nbrOfEdges / nbrOfVertices;
+
+    
+        }
+
+        int wtf = nbrOfEdges/nbr_mpi_proc;
+        int **scatterGraph;
+        scatterGraph = (int **) malloc(wtf * sizeof(int *));
+        for (i = 0; i < wtf; i++)
+        {
+            scatterGraph[i] = (int *) malloc(3 * sizeof(int));
+        }
+
+
+        /* Now let's scatter the test matrix*/
+
+        MPI_Scatter(&graph[0][0], wtf*3, MPI_INT,&scatterGraph[0][0], wtf*3, MPI_INT, 0, MPI_COMM_WORLD);
+
+
+        for (i = 0; i < nbrOfEdges; i++)
+            free(graph[i]);
+        free(graph);
+
+        for (i = 0; i < wtf; i++)
+            free(scatterGraph[i]);
+        free(scatterGraph);
+    }
+    MPI_Finalize();       /* cleanup MPI */
     return 0;
 }
