@@ -164,8 +164,7 @@ int main(int argc, char **argv)
         size_t       nbrOfVertices;
         int          *graph;
         size_t       i, j;
-        int          ret, lineIdx, degree, wtf;
-        unsigned int shortestDist;
+        int          ret, lineIdx, degree, wtf, wth;
 
         const size_t source = atoi(argv[1]);
         const size_t target = atoi(argv[2]);
@@ -192,6 +191,7 @@ int main(int argc, char **argv)
         nbrOfVertices = i1 + 1;
         degree = nbrOfEdges / nbrOfVertices;
         wtf = nbrOfEdges / nbr_mpi_proc;
+        wth = degree/nbr_mpi_proc;
         graph = (int *) malloc(nbrOfEdges * 3 * sizeof(int *));
         /*for (i = 0; i < nbrOfEdges; i++)
         {
@@ -257,31 +257,58 @@ int main(int argc, char **argv)
         MPI_Scatter(graph, wtf*3, MPI_INT,scatterGraph, wtf*3, MPI_INT, 0, MPI_COMM_WORLD);
         free(graph);
 
-        unsigned int shortestDist[nbrOfVertices];
-        int visited[nbrOfVertices];
-        int currentNode;
+        /* Here we begin with Dijkstra*/
+        
+        unsigned int *dist = (unsigned int *) malloc(nbrOfVertices * sizeof(int));
+        int *visited = (int *) calloc(nbrOfVertices , sizeof(int));
+        int *prev = (int *) malloc(nbrOfVertices * sizeof(int));
+        unsigned int minDist, alt, retDist;
+        int currentNode, minNode, idx, nbrVisited, pathLength;
+        
         
         for (i = 0; i < nbrOfVertices; i++)
         {
-            shortestDist[i] = INF;
-            visited[i] = 0;
+            dist[i] = INF;
         }
-        currentNode = source;
-        shortestDist[currentNode] = 0;
-        visited[currentNode] = 1;
+        dist[source] = 0;
+        nbrVisited = 0;        
 
-        while( currentNode != target )
+        while( nbrVisited < nbrOfVertices )
         {
-
-            for (i = 0; i < wtf*3; i++)
+            if(myrank == 0)
             {
-                if( shortestDist[currentNode] > scatterGraph[i]) 
-                    ;
+                minDist = INF;
+                for(i = 0; i < nbrOfVertices; i++)
+                {
+                    if ( dist[i] < minDist && visited[i] == 0 ){
+                        minDist = dist[i];
+                        minNode = i;
+                    }
+                }
+                currentNode = minNode;
+                visited[currentNode] = 1;
+                nbrVisited++;
+            }
+            
+            MPI_Bcast(visited, nbrOfVertices, MPI_INT, 0, MPI_COMM_WORLD);        
+            MPI_Bcast(currentNode, 1, MPI_INT, 0, MPI_COMM_WORLD);
+            
+            for (i = 0; i < wtf*3; i+=3)
+            {
+                idx = currentNode*wth*3 + i;
+                alt = dist[currentNode] + scatterGraph[idx+2];
+                if ( alt < dist[scatterGraph[idx+1]] && visited[scatterGraph[idx+1]] == 0 ){
+                    dist[scatterGraph[idx+1]] = alt;
+                    prev[scatterGraph[idx+1]] = currentNode;
+                }
             }
 
+            MPI_Allreduce(dist, dist, nbrOfVertices, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+            MPI_Allreduce(prev, prev, nbrOfVertices, MPI_INT, MPI_MIN, MPI_COMM_WORLD);            
+
         }
 
-        printf("Shortest distance: %d\n", shortestDist[currentNode]);
+        printf("Shortest distance: %d\n", dist[currentNode]);
         
         free(scatterGraph);
     }
