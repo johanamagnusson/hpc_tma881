@@ -154,14 +154,14 @@ int main(int argc, char **argv)
         theOnlyOne(argc, argv);
     } else {
         printf("Number of processes %d:", nbr_mpi_proc);
-        printf("I am your master!");
+        //printf("I am your master!");
         FILE         *graphFile;
         char         *fileName;
         char         ch;
         int          i1, i2, w;
         size_t       nbrOfEdges;
         size_t       nbrOfVertices;
-        int          **graph;
+        int          *graph;
         size_t       i;
         int          ret, lineIdx, degree;
         unsigned int shortestDist;
@@ -179,47 +179,60 @@ int main(int argc, char **argv)
                 nbrOfEdges++;
             }
         }
-        if (myrank == 0) { 
-            graph = (int **) malloc(nbrOfEdges * sizeof(int *));
-            for (i = 0; i < nbrOfEdges; i++)
+            graph = (int *) malloc(nbrOfEdges* 3  * sizeof(int *));
+            /*for (i = 0; i < nbrOfEdges; i++)
             {
                 graph[i] = (int *) malloc(3 * sizeof(int));
-            }
-    
+            }*/
+        if (myrank == 0){ 
             fseek(graphFile, 0, SEEK_SET);
-            for (i = 0; i < nbrOfEdges; i++)
+            for (i = 0; i < nbrOfEdges*3; i+=3)
             {
-                ret = fscanf(graphFile, "%d", &graph[i][0]);
-                ret = fscanf(graphFile, "%d", &graph[i][1]);
-                ret = fscanf(graphFile, "%d", &graph[i][2]);
+                ret = fscanf(graphFile, "%d", &graph[i]);
+                ret = fscanf(graphFile, "%d", &graph[i+1]);
+                ret = fscanf(graphFile, "%d", &graph[i+2]);
             }
             fclose(graphFile);
-            nbrOfVertices = graph[nbrOfEdges-1][0] + 1;
+            nbrOfVertices = graph[nbrOfEdges*3 -3] + 1;
             degree = nbrOfEdges / nbrOfVertices;
-
+            
+            for ( i = 1; i<nbr_mpi_proc; i++){
+            
+                //int dest_rank = 1; int tag = 1;
+                MPI_Send(&degree, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+                //printf( "MPI message sent from %d: %d\n", mpi_rank, msg );
+            
+            }
     
-        }
+        } else {
+            
+                //int src_rank = 0; int tag = 1;
+                MPI_Status status;
+                MPI_Recv(&degree, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                //printf( "MPI message received at %d: %d\n", mpi_rank, msg );
 
-        int wtf = nbrOfEdges/nbr_mpi_proc;
-        int **scatterGraph;
-        scatterGraph = (int **) malloc(wtf * sizeof(int *));
-        for (i = 0; i < wtf; i++)
-        {
-            scatterGraph[i] = (int *) malloc(3 * sizeof(int));
         }
+        printf("Degree is for worker %d = %d", myrank, degree);
+        int wtf = nbrOfEdges/nbr_mpi_proc;
+        int *scatterGraph;
+        scatterGraph = (int *) malloc(wtf * degree * 2 * sizeof(int *));
+        //for (i = 0; i < wtf; i++)
+        //{
+        //    scatterGraph[i] = (int *) malloc(3 * sizeof(int));
+        //}
 
 
         /* Now let's scatter the test matrix*/
+        
+        //MPI_Scatter(graph, wtf*degree*2, MPI_INT,scatterGraph, wtf*degree*2, MPI_INT, 0, MPI_COMM_WORLD);
 
-        MPI_Scatter(&graph[0][0], wtf*3, MPI_INT,&scatterGraph[0][0], wtf*3, MPI_INT, 0, MPI_COMM_WORLD);
 
-
-        for (i = 0; i < nbrOfEdges; i++)
-            free(graph[i]);
+        //for (i = 0; i < nbrOfEdges; i++)
+        //    free(graph[i]);
         free(graph);
 
-        for (i = 0; i < wtf; i++)
-            free(scatterGraph[i]);
+        //for (i = 0; i < wtf; i++)
+        //    free(scatterGraph[i]);
         free(scatterGraph);
     }
     MPI_Finalize();       /* cleanup MPI */
