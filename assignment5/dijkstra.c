@@ -164,7 +164,6 @@ int main(int argc, char **argv)
         int          *graph;
         size_t       i;
         int          ret, lineIdx, degree;
-        unsigned int shortestDist;
 
         const size_t source = atoi(argv[1]);
         const size_t target = atoi(argv[2]);
@@ -212,27 +211,42 @@ int main(int argc, char **argv)
                 //printf( "MPI message received at %d: %d\n", mpi_rank, msg );
 
         }
-        printf("Degree is for worker %d = %d", myrank, degree);
+        printf("Degree is for worker %d = %d\n", myrank, degree);
         int wtf = nbrOfEdges/nbr_mpi_proc;
         int *scatterGraph;
-        scatterGraph = (int *) malloc(wtf * degree * 2 * sizeof(int *));
-        //for (i = 0; i < wtf; i++)
-        //{
-        //    scatterGraph[i] = (int *) malloc(3 * sizeof(int));
-        //}
-
+        scatterGraph = (int *) malloc(wtf * 3 * sizeof(int *));
 
         /* Now let's scatter the test matrix*/
-        
-        //MPI_Scatter(graph, wtf*degree*2, MPI_INT,scatterGraph, wtf*degree*2, MPI_INT, 0, MPI_COMM_WORLD);
-
-
-        //for (i = 0; i < nbrOfEdges; i++)
-        //    free(graph[i]);
+       
+        MPI_Scatter(graph, wtf*3, MPI_INT,scatterGraph, wtf*3, MPI_INT, 0, MPI_COMM_WORLD);
         free(graph);
 
-        //for (i = 0; i < wtf; i++)
-        //    free(scatterGraph[i]);
+        unsigned int shortestDist[nbrOfVertices];
+        int visited[nbrOfVertices];
+        int currentNode;
+        
+        for (i = 0; i < nbrOfVertices; i++)
+        {
+            shortestDist[i] = INF;
+            visited[i] = 0;
+        }
+        currentNode = source;
+        shortestDist[currentNode] = 0;
+        visited[currentNode] = 1;
+
+        while( currentNode != target )
+        {
+
+            for (i = 0; i < wtf*3; i++)
+            {
+                if( shortestDist[currentNode] > scatterGraph[i]) 
+                    ;
+            }
+
+        }
+
+        printf("Shortest distance: %d\n", shortestDist[currentNode]);
+        
         free(scatterGraph);
     }
     MPI_Finalize();       /* cleanup MPI */
