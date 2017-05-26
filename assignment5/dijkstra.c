@@ -188,18 +188,14 @@ int main(int argc, char **argv)
         nbrOfVertices = i1 + 1;
         degree = nbrOfEdges / nbrOfVertices;
         wtf = nbrOfEdges / nbr_mpi_proc;
-        wth = degree/nbr_mpi_proc;
         graph = (int *) malloc(nbrOfEdges * 3 * sizeof(int));
         if (myrank == 0){ 
             fseek(graphFile, 0, SEEK_SET);
-            for (i = 0; i < wtf*3; i += 3)
+            for (i = 0; i < nbrOfEdges*3; i += 3)
             {
-                for (j = i; j < nbrOfEdges * 3; j += wtf * 3)
-                {
-                    ret = fscanf(graphFile, "%d", &graph[j]);
-                    ret = fscanf(graphFile, "%d", &graph[j+1]);
-                    ret = fscanf(graphFile, "%d", &graph[j+2]);
-                }
+                ret = fscanf(graphFile, "%d", &graph[i]);
+                ret = fscanf(graphFile, "%d", &graph[i+1]);
+                ret = fscanf(graphFile, "%d", &graph[i+2]);
             }
             fclose(graphFile);
         }
@@ -224,10 +220,11 @@ int main(int argc, char **argv)
         */
         // Here we begin with Dijkstra 
         unsigned int *dist = (unsigned int *) malloc(nbrOfVertices * sizeof(int));
-        int *visited = (int *) calloc(nbrOfVertices, sizeof(int));
+        int *inCluster= (int *) calloc(nbrOfVertices, sizeof(int));
         int *prev = (int *) malloc(nbrOfVertices * sizeof(int));
-        int *update = (int *) calloc(nbrOfVertices, sizeof(int));
-        unsigned int minDist, alt, retDist;
+        unsigned int alt, retDist;
+        int minDistLoc[2];
+        int minDist[2];
         int currentNode, minNode, idx, nbrVisited, pathLength;
         
         
@@ -242,37 +239,44 @@ int main(int argc, char **argv)
 
         while( nbrVisited < nbrOfVertices )
         {
-            if(myrank == 0)
+            minDist = INF;
+            for(i = 0; i < nbrOfVertices; i++)
             {
-                minDist = INF;
-                for(i = 0; i < nbrOfVertices; i++)
-                {
-                    if ( dist[i] < minDist && !visited[i]){
-                        minDist = dist[i];
-                        minNode = i;
-                    }
+                if ( dist[i] < minDist && !inCluster[i]){
+                    minDist = dist[i];
+                    minNode = i;
                 }
-                currentNode = minNode;
-                visited[currentNode] = 1;
             }
+            currentNode = minNode;
+            inCluster[currentNode] = 1;
             
             nbrVisited++;
-            MPI_Bcast(visited, nbrOfVertices, MPI_INT, 0, MPI_COMM_WORLD);        
+            MPI_Bcast(inCluster, nbrOfVertices, MPI_INT, 0, MPI_COMM_WORLD); 
             //MPI_Bcast(update, nbrOfVertices, MPI_INT, 0, MPI_COMM_WORLD);        
-            MPI_Bcast(&currentNode, 1, MPI_INT, 0, MPI_COMM_WORLD);
+            //MPI_Bcast(&currentNode, 1, MPI_INT, 0, MPI_COMM_WORLD);
             
-            for (i = 0; i < wth*3; i+=3)
+            for (i = 0; i < wtf*3; i+=3)
             {
-                idx = currentNode*wth*3 + i;
-                alt = dist[currentNode] + scatterGraph[idx+2];
-                if ( alt < dist[scatterGraph[idx+1]] && !visited[scatterGraph[idx+1]]){
-                    dist[scatterGraph[idx+1]] = alt;
-                    //update[scatterGraph[idx+1]] = 1;
+                if (!inCluster[scatterGraph[i]])
+                {
+                    if (inCluster[scatterGraph[i+1]])
+                    {
+                        alt = dist[scatterGraph[i+1]] + scatterGraph[i+2];
+                        if (alt < dist[scatterGraph[i]])
+                        {
+                            dist[scatterGraph[i]] = alt;
+                            minDistLoc[1] = scatterGraph[i];
+                            minDistLoc[0] = alt;
+                            //update[scatterGraph[idx+1]] = 1;
+                        }
+                    }
                 }
             }
 
-            MPI_Allreduce(MPI_IN_PLACE, dist, nbrOfVertices, MPI_UNSIGNED, MPI_MIN, MPI_COMM_WORLD);
-            //MPI_Allreduce(MPI_IN_PLACE, update, nbrOfVertices, MPI_INT, MPI_LOR, MPI_COMM_WORLD);
+            //MPI_Allreduce(MPI_IN_PLACE, dist, nbrOfVertices, MPI_UNSIGNED, MPI_MIN, MPI_COMM_WORLD);
+            MPI_Allreduce(minDistLoc, minDist, 1, MPI_2INT, MPI_MINLOC, MPI_COMM_WORLD);
+
+
             /*
             if (myrank == 0)
             {
@@ -318,9 +322,8 @@ int main(int argc, char **argv)
         }
         
         free(dist);
-        free(visited);
+        free(inCluster);
         free(prev);
-        free(update);
         free(scatterGraph);
     }
     
