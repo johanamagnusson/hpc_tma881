@@ -258,7 +258,7 @@ int main(int argc, char **argv)
             
             nbrVisited++;
             MPI_Bcast(visited, nbrOfVertices, MPI_INT, 0, MPI_COMM_WORLD);        
-            //MPI_Bcast(update, nbrOfVertices, MPI_INT, 0, MPI_COMM_WORLD);        
+            MPI_Bcast(update, nbrOfVertices, MPI_INT, 0, MPI_COMM_WORLD);        
             MPI_Bcast(&currentNode, 1, MPI_INT, 0, MPI_COMM_WORLD);
             
             for (i = 0; i < wth*3; i+=3)
@@ -267,13 +267,13 @@ int main(int argc, char **argv)
                 alt = dist[currentNode] + scatterGraph[idx+2];
                 if ( alt < dist[scatterGraph[idx+1]] && !visited[scatterGraph[idx+1]]){
                     dist[scatterGraph[idx+1]] = alt;
-                    //update[scatterGraph[idx+1]] = 1;
+                    update[scatterGraph[idx+1]] = 1;
                 }
             }
-
+            
             MPI_Allreduce(MPI_IN_PLACE, dist, nbrOfVertices, MPI_UNSIGNED, MPI_MIN, MPI_COMM_WORLD);
-            //MPI_Allreduce(MPI_IN_PLACE, update, nbrOfVertices, MPI_INT, MPI_LOR, MPI_COMM_WORLD);
-            /*
+            MPI_Allreduce(MPI_IN_PLACE, update, nbrOfVertices, MPI_INT, MPI_LOR, MPI_COMM_WORLD);
+
             if (myrank == 0)
             {
                 for (i = 0; i < nbrOfVertices; i++)
@@ -285,14 +285,14 @@ int main(int argc, char **argv)
                     }
                 }
             }
-            */
+            
         }
 
         if (myrank == 0)
         {
             
             retDist = dist[target];
-            /*
+            
             currentNode = target;
             pathLength = 1;
             while (currentNode != source)
@@ -313,7 +313,7 @@ int main(int argc, char **argv)
             for (i = 0; i < pathLength-1; i++)
                 printf("%d -> ", path[i]);
             printf("%lu\n", target);
-            */
+            
             printf("Shortest distance: %d\n", retDist);
         }
         
