@@ -227,7 +227,6 @@ int main(int argc, char **argv)
         int minDist[2];
         int currentNode, minNode, idx, nbrVisited, pathLength;
         
-        
         for (i = 0; i < nbrOfVertices; i++)
         {
             dist[i] = INF;
@@ -236,10 +235,7 @@ int main(int argc, char **argv)
         nbrVisited = 0;
 
         //printf("%lu, %lu, %d, %d\n", nbrOfVertices, nbrOfEdges, wtf, wth);
-
-        while( nbrVisited < nbrOfVertices )
-        {
-            minDist = INF;
+/*
             for(i = 0; i < nbrOfVertices; i++)
             {
                 if ( dist[i] < minDist && !inCluster[i]){
@@ -247,14 +243,19 @@ int main(int argc, char **argv)
                     minNode = i;
                 }
             }
-            currentNode = minNode;
+*/
+            currentNode = source;
+
             inCluster[currentNode] = 1;
             
             nbrVisited++;
             MPI_Bcast(inCluster, nbrOfVertices, MPI_INT, 0, MPI_COMM_WORLD); 
             //MPI_Bcast(update, nbrOfVertices, MPI_INT, 0, MPI_COMM_WORLD);        
             //MPI_Bcast(&currentNode, 1, MPI_INT, 0, MPI_COMM_WORLD);
-            
+        while( nbrVisited < nbrOfVertices )
+        {
+            minDistLoc[0] = INF;
+
             for (i = 0; i < wtf*3; i+=3)
             {
                 if (!inCluster[scatterGraph[i]])
@@ -272,11 +273,15 @@ int main(int argc, char **argv)
                     }
                 }
             }
-
+            
             //MPI_Allreduce(MPI_IN_PLACE, dist, nbrOfVertices, MPI_UNSIGNED, MPI_MIN, MPI_COMM_WORLD);
+
+            /*Something is wrong in allreduce or the pathfinder...*/
+
             MPI_Allreduce(minDistLoc, minDist, 1, MPI_2INT, MPI_MINLOC, MPI_COMM_WORLD);
-
-
+            printf("MinDist = %d and = %d says worker %d\n", minDist[0], minDist[1], myrank);
+            //MPI_Allreduce(MPI_IN_PLACE, allCurrentSugg, nbr_mpi_proc, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+            nbrVisited++;
             /*
             if (myrank == 0)
             {
