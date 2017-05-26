@@ -150,8 +150,6 @@ int main(int argc, char **argv)
     if (nbr_mpi_proc == 1) {
         theOnlyOne(argc, argv);
     } else {
-        //printf("Number of processes: %d\n", nbr_mpi_proc);
-        //printf("I am your master!");
         FILE         *graphFile;
         char         *fileName;
         char         ch;
@@ -203,39 +201,12 @@ int main(int argc, char **argv)
         }
         fclose(graphFile);
 
-        //printf("Degree is for worker %d = %d\n", myrank, degree);
         int *scatterGraph;
         scatterGraph = (int *) calloc(wtf * 3, sizeof(int));
         
-        int start = block * myrank;
-        int end = start + block;
-
-        /*
-        j = 0;
-        for (i = 0; i < nbrOfEdges*3; i+=3)
-        {
-            if (graph[i+1] >= start && graph[i+1] < end)
-            {
-                scatterGraph[j] = graph[i];
-                scatterGraph[j+1] = graph[i+1];
-                scatterGraph[j+2] = graph[i+2];
-                j+=3;
-            }
-        }
-        */
-
         /* Now let's scatter the test matrix*/
        
         MPI_Scatter(graph, wtf*3, MPI_INT,scatterGraph, wtf*3, MPI_INT, 0, MPI_COMM_WORLD);
-        /* 
-        for (i = 0; i < wtf*3; i += 3)
-        {
-            printf("Rank: %d, %d %d %d\n", myrank,
-                    scatterGraph[i],
-                    scatterGraph[i+1],
-                    scatterGraph[i+2]);
-        }
-        */
         free(graph);
 
         // Here we begin with Dijkstra 
@@ -256,7 +227,6 @@ int main(int argc, char **argv)
 
         currentNode = source;
 
-        //printf("%d %d %d %d %d\n", start, end, wtf*3, degree, INF);
         
         for (nbrVisited = 0; nbrVisited < nbrOfVertices; nbrVisited++)
         {
