@@ -191,30 +191,43 @@ int main(int argc, char **argv)
         wth = degree / nbr_mpi_proc;
         block = nbrOfVertices / nbr_mpi_proc;
         graph = (int *) malloc(nbrOfEdges * 3 * sizeof(int));
-        if (myrank == 0){ 
-            fseek(graphFile, 0, SEEK_SET);
-            for (i = 0; i < wtf * 3; i += 3)
+        fseek(graphFile, 0, SEEK_SET);
+        for (i = 0; i < wtf * 3; i += 3)
+        {
+            for (j = i; j < nbrOfEdges * 3; j += wtf * 3)
             {
-                for (j = i; j < nbrOfEdges * 3; j += wtf*3)
-                {
-                    ret = fscanf(graphFile, "%d", &graph[j]);
-                    ret = fscanf(graphFile, "%d", &graph[j+1]);
-                    ret = fscanf(graphFile, "%d", &graph[j+2]);
-                }
+                ret = fscanf(graphFile, "%d", &graph[j]);
+                ret = fscanf(graphFile, "%d", &graph[j+1]);
+                ret = fscanf(graphFile, "%d", &graph[j+2]);
             }
-            fclose(graphFile);
         }
+        fclose(graphFile);
 
         //printf("Degree is for worker %d = %d\n", myrank, degree);
         int *scatterGraph;
-        scatterGraph = (int *) malloc(wtf * degree * 3 * sizeof(int));
+        scatterGraph = (int *) calloc(wtf * 3, sizeof(int));
+        
+        int start = block * myrank;
+        int end = start + block;
 
+        /*
+        j = 0;
+        for (i = 0; i < nbrOfEdges*3; i+=3)
+        {
+            if (graph[i+1] >= start && graph[i+1] < end)
+            {
+                scatterGraph[j] = graph[i];
+                scatterGraph[j+1] = graph[i+1];
+                scatterGraph[j+2] = graph[i+2];
+                j+=3;
+            }
+        }
+        */
 
         /* Now let's scatter the test matrix*/
        
         MPI_Scatter(graph, wtf*3, MPI_INT,scatterGraph, wtf*3, MPI_INT, 0, MPI_COMM_WORLD);
-        free(graph);
-        /*
+        /* 
         for (i = 0; i < wtf*3; i += 3)
         {
             printf("Rank: %d, %d %d %d\n", myrank,
@@ -223,6 +236,8 @@ int main(int argc, char **argv)
                     scatterGraph[i+2]);
         }
         */
+        free(graph);
+
         // Here we begin with Dijkstra 
         int *dist = (int *) malloc(nbrOfVertices * sizeof(int));
         int *inCluster= (int *) calloc(nbrOfVertices, sizeof(int));
@@ -230,10 +245,8 @@ int main(int argc, char **argv)
         int alt, retDist;
         int minDistLoc[2];
         int minDist[2];
-        int currentNode, minNode, idx, nbrVisited, pathLength, best, currentDist;
+        int currentNode, minNode, idx, nbrVisited, pathLength, currentDist;
 
-        int start = block * myrank;
-        int end = start + block;
         
         for (i = 0; i < nbrOfVertices; i++)
         {
@@ -245,10 +258,10 @@ int main(int argc, char **argv)
 
         //printf("%d %d %d %d %d\n", start, end, wtf*3, degree, INF);
         
-        for (nbrVisited = 0; nbrVisited <= nbrOfVertices; nbrVisited++)
+        for (nbrVisited = 0; nbrVisited < nbrOfVertices; nbrVisited++)
         {
             minDistLoc[0] = INF;
-            for (i = start; i < end; i++)
+            for (i = 0; i < nbrOfVertices; i++)
             {
                 if (!inCluster[i])
                 {
@@ -261,13 +274,12 @@ int main(int argc, char **argv)
             }
             //printf("%d %d\n", minDistLoc[0], minDistLoc[1]); 
             MPI_Allreduce(minDistLoc, minDist, 1, MPI_2INT, MPI_MINLOC, MPI_COMM_WORLD);
-            prev[minDist[1]] = currentNode;
             currentNode = minDist[1];
             currentDist = minDist[0];
             inCluster[currentNode] = 1;
 
             //printf("%d %d\n", minDistLoc[0], minDistLoc[1]); 
-            for (i = 0; i < block * 3; i += 3)
+            for (i = 0; i < wth * 3; i += 3)
             {
                 idx = currentNode*wth*3 + i;
                 if (!inCluster[scatterGraph[idx+1]])
@@ -276,31 +288,18 @@ int main(int argc, char **argv)
                     if (alt < dist[scatterGraph[idx+1]])
                     {
                         dist[scatterGraph[idx+1]] = alt;
-                        prev[scatterGraph[idx+1]] = currentNode;
+                        //prev[scatterGraph[idx+1]] = currentNode;
                     }
                 }
 
             }
-            
-            /*
-            if (myrank == 0)
-            {
-                for (i = 0; i < nbrOfVertices; i++)
-                {
-                    if (update[i])
-                    {
-                        prev[i] = currentNode;
-                        update[i] = 0;
-                    }
-                }
-            }
-            */
+
         }
         MPI_Allreduce(MPI_IN_PLACE, dist, nbrOfVertices, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
         if (myrank == 0)
         {
             retDist = dist[target];
-            
+           /* 
             currentNode = target;
             pathLength = 1;
             while (currentNode != source)
@@ -321,6 +320,8 @@ int main(int argc, char **argv)
             for (i = 0; i < pathLength-1; i++)
                 printf("%d -> ", path[i]);
             printf("%d\n", target);
+            */
+            printf("Shortest distance: %d\n", retDist);
         }
         
         free(dist);
